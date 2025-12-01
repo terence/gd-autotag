@@ -33,24 +33,38 @@ if (! class_exists('WpPlugin\\Plugin')) {
 }
 
 // Load plugin-update-checker via submodule if not already available through Composer
-if (! class_exists('Puc_v4_Factory')) {
+if (! class_exists('YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory')) {
     $pucFile = __DIR__ . '/vendor/plugin-update-checker/plugin-update-checker.php';
     if (file_exists($pucFile)) {
         require_once $pucFile;
     }
 }
 
-// Optional: GitHub update checker via yahniselsts/plugin-update-checker
-// When the library is installed via Composer, initialize updates from GitHub Releases.
-if (class_exists('Puc_v4_Factory')) {
-    $updateChecker = Puc_v4_Factory::buildUpdateChecker(
-        // Replace with your public repo URL, e.g. https://github.com/owner/wp-plugin
-        'https://github.com/terence/wp-plugin',
-        WP_PLUGIN_FILE,
-        'wp-plugin'
-    );
-    // If releases are under GitHub Releases, enable release assets.
-    $updateChecker->getVcsApi()->enableReleaseAssets();
+// GitHub update checker via plugin-update-checker v5
+// Checks GitHub Releases for new versions and provides update information to WordPress.
+if (class_exists('YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory')) {
+    try {
+        $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+            // Replace with your public repo URL, e.g. https://github.com/owner/wp-plugin
+            'https://github.com/terence/wp-plugin',
+            WP_PLUGIN_FILE,
+            'wp-plugin'
+        );
+        
+        // Enable GitHub Releases - tells the checker to look for release assets (ZIP files)
+        if (method_exists($updateChecker, 'getVcsApi')) {
+            $updateChecker->getVcsApi()->enableReleaseAssets();
+        }
+        
+        // Optional: Set branch if not using main/master
+        // $updateChecker->setBranch('main');
+        
+        // Optional: For private repos, set authentication token
+        // $updateChecker->setAuthentication('your_github_token_here');
+    } catch (Exception $e) {
+        // Log error but don't break plugin initialization
+        error_log('wp-plugin update checker failed: ' . $e->getMessage());
+    }
 }
 
 // Activation and deactivation hooks
