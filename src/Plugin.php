@@ -43,6 +43,9 @@ class Plugin
     {
         $admin = new Admin\Admin($this->file);
         $admin->register();
+        
+        $postTagger = new PostTagger();
+        $postTagger->register();
     }
 
     public function init_public(): void

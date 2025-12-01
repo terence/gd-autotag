@@ -110,6 +110,15 @@ class Admin
             'wp-plugin-settings',
             'wp_plugin_advanced_section'
         );
+        
+        // Tag generation settings
+        add_settings_field(
+            'auto_tag_enabled',
+            'Auto-Tag Posts',
+            [$this, 'render_auto_tag_field'],
+            'wp-plugin-settings',
+            'wp_plugin_general_section'
+        );
     }
 
     public function sanitize_settings($input)
@@ -126,6 +135,10 @@ class Admin
         
         if (isset($input['debug_mode'])) {
             $sanitized['debug_mode'] = (bool) $input['debug_mode'];
+        }
+        
+        if (isset($input['auto_tag_enabled'])) {
+            $sanitized['auto_tag_enabled'] = (bool) $input['auto_tag_enabled'];
         }
         
         return $sanitized;
@@ -212,6 +225,19 @@ class Admin
             Enable debug mode
         </label>
         <p class="description">Enable debug logging for troubleshooting.</p>
+        <?php
+    }
+
+    public function render_auto_tag_field(): void
+    {
+        $options = get_option('wp_plugin_options', []);
+        $enabled = isset($options['auto_tag_enabled']) ? $options['auto_tag_enabled'] : false;
+        ?>
+        <label>
+            <input type="checkbox" name="wp_plugin_options[auto_tag_enabled]" value="1" <?php checked($enabled, true); ?> />
+            Enable automatic tag generation
+        </label>
+        <p class="description">Allow bulk tag generation from the Posts list page. Also adds a meta box to individual posts.</p>
         <?php
     }
 
