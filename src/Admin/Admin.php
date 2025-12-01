@@ -331,6 +331,10 @@ class Admin
                 
                 // Get total tag count
                 $total_tags = wp_count_terms(['taxonomy' => 'post_tag', 'hide_empty' => false]);
+                
+                // Calculate percentages
+                $with_tags_percent = $published_posts > 0 ? round(($posts_with_tags / $published_posts) * 100) : 0;
+                $without_tags_percent = $published_posts > 0 ? round(($posts_without_tags / $published_posts) * 100) : 0;
                 ?>
                 <table class="form-table">
                     <tr>
@@ -346,7 +350,7 @@ class Admin
                         <td>
                             <span style="color: green;"><?php echo esc_html($posts_with_tags); ?></span>
                             <?php if ($published_posts > 0): ?>
-                                (<?php echo esc_html(round(($posts_with_tags / $published_posts) * 100)); ?>%)
+                                (<?php echo esc_html($with_tags_percent); ?>%)
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -355,6 +359,7 @@ class Admin
                         <td>
                             <?php if ($posts_without_tags > 0): ?>
                                 <span style="color: orange;"><?php echo esc_html($posts_without_tags); ?></span>
+                                (<?php echo esc_html($without_tags_percent); ?>%)
                             <?php else: ?>
                                 <span style="color: green;">0</span>
                             <?php endif; ?>
@@ -365,8 +370,43 @@ class Admin
                         <td><?php echo esc_html($total_tags); ?></td>
                     </tr>
                 </table>
+                
+                <?php if ($published_posts > 0): ?>
+                <div style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 10px;">Tag Coverage</h3>
+                    <div class="wp-plugin-chart-container">
+                        <div class="wp-plugin-chart-bar">
+                            <div class="wp-plugin-chart-segment wp-plugin-chart-tagged" 
+                                 style="width: <?php echo esc_attr($with_tags_percent); ?>%;"
+                                 title="Posts with tags: <?php echo esc_attr($posts_with_tags); ?> (<?php echo esc_attr($with_tags_percent); ?>%)">
+                                <?php if ($with_tags_percent > 10): ?>
+                                    <span class="wp-plugin-chart-label"><?php echo esc_html($with_tags_percent); ?>%</span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="wp-plugin-chart-segment wp-plugin-chart-untagged" 
+                                 style="width: <?php echo esc_attr($without_tags_percent); ?>%;"
+                                 title="Posts without tags: <?php echo esc_attr($posts_without_tags); ?> (<?php echo esc_attr($without_tags_percent); ?>%)">
+                                <?php if ($without_tags_percent > 10): ?>
+                                    <span class="wp-plugin-chart-label"><?php echo esc_html($without_tags_percent); ?>%</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="wp-plugin-chart-legend">
+                            <div class="wp-plugin-legend-item">
+                                <span class="wp-plugin-legend-color wp-plugin-legend-tagged"></span>
+                                <span>Posts with Tags (<?php echo esc_html($posts_with_tags); ?>)</span>
+                            </div>
+                            <div class="wp-plugin-legend-item">
+                                <span class="wp-plugin-legend-color wp-plugin-legend-untagged"></span>
+                                <span>Posts without Tags (<?php echo esc_html($posts_without_tags); ?>)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                
                 <?php if ($posts_without_tags > 0): ?>
-                    <p style="margin-top: 10px;">
+                    <p style="margin-top: 15px;">
                         <a href="<?php echo admin_url('edit.php?post_type=post'); ?>" class="button button-secondary">
                             View Posts
                         </a>
