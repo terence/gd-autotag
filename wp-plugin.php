@@ -18,7 +18,7 @@ if (! defined('WPINC')) {
 }
 
 // Plugin constants
-define('WP_PLUGIN_VERSION', '0.1.0');
+define('WP_PLUGIN_VERSION', '0.1.1');
 define('WP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WP_PLUGIN_FILE', __FILE__);
 
