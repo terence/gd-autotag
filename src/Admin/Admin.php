@@ -27,10 +27,15 @@ class Admin
 
     public function add_action_links($links): array
     {
-        $settings_link = '<a href="' . admin_url('admin.php?page=wp-plugin-settings') . '">Settings</a>';
-        $dashboard_link = '<a href="' . admin_url('admin.php?page=wp-plugin') . '">Dashboard</a>';
-        
-        array_unshift($links, $settings_link, $dashboard_link);
+        $icon_url = esc_url(plugin_dir_url($this->file) . 'assets/img/glitchdata_logo1.png');
+        $icon_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin')) . '" aria-label="wp_plugin">'
+            . '<img src="' . $icon_url . '" alt="wp_plugin" style="width:16px;height:16px;vertical-align:middle;border-radius:2px;" />'
+            . '</a>';
+
+        $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin-settings')) . '">Settings</a>';
+        $dashboard_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin')) . '">Dashboard</a>';
+
+        array_unshift($links, $settings_link, $dashboard_link, $icon_link);
         
         return $links;
     }
@@ -43,7 +48,7 @@ class Admin
             'manage_options',
             'wp-plugin',
             [$this, 'render_admin_page'],
-            'dashicons-admin-plugins'
+            plugin_dir_url($this->file) . 'assets/img/glitchdata_logo1.png'
         );
         
         add_submenu_page(
@@ -139,6 +144,7 @@ class Admin
         
         ?>
         <div class="wrap">
+            <img src="<?php echo esc_url( plugin_dir_url($this->file) . 'assets/img/glitchdata_logo1.png' ); ?>" alt="wp_plugin logo" class="wp-plugin-logo" />
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
             
             <h2 class="nav-tab-wrapper">
