@@ -46,7 +46,7 @@ class Admin
 
         add_menu_page(
             'WP Plugin',        // Page title
-            'WP Plugin',        // Menu title
+            'Dashboard',        // Menu title
             'manage_options',
             'wp-plugin',
             [$this, 'render_admin_page'],
