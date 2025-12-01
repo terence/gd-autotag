@@ -32,6 +32,19 @@ if (! class_exists('WpPlugin\\Plugin')) {
     require_once WP_PLUGIN_DIR . 'src/Plugin.php';
 }
 
+// Optional: GitHub update checker via yahniselsts/plugin-update-checker
+// When the library is installed via Composer, initialize updates from GitHub Releases.
+if (class_exists('Puc_v4_Factory')) {
+    $updateChecker = Puc_v4_Factory::buildUpdateChecker(
+        // Replace with your public repo URL, e.g. https://github.com/owner/wp-plugin
+        'https://github.com/terence/wp-plugin',
+        WP_PLUGIN_FILE,
+        'wp-plugin'
+    );
+    // If releases are under GitHub Releases, enable release assets.
+    $updateChecker->getVcsApi()->enableReleaseAssets();
+}
+
 // Activation and deactivation hooks
 register_activation_hook(__FILE__, ['WpPlugin\\Plugin', 'activate']);
 register_deactivation_hook(__FILE__, ['WpPlugin\\Plugin', 'deactivate']);
