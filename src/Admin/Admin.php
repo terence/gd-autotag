@@ -129,6 +129,12 @@ class Admin
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            
+            <h2 class="nav-tab-wrapper">
+                <a href="?page=wp-plugin" class="nav-tab">Dashboard</a>
+                <a href="?page=wp-plugin-settings" class="nav-tab nav-tab-active">Settings</a>
+            </h2>
+            
             <form method="post" action="options.php">
                 <?php
                 settings_fields('wp_plugin_settings');
@@ -208,11 +214,59 @@ class Admin
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
             
+            <h2 class="nav-tab-wrapper">
+                <a href="?page=wp-plugin" class="nav-tab nav-tab-active">Dashboard</a>
+                <a href="?page=wp-plugin-settings" class="nav-tab">Settings</a>
+            </h2>
+            
             <div class="card">
                 <h2>Plugin Information</h2>
                 <p><strong>Version:</strong> <?php echo esc_html(WP_PLUGIN_VERSION); ?></p>
                 <p><strong>Update Source:</strong> GitHub Releases</p>
                 <p><strong>Repository:</strong> <a href="https://github.com/terence/wp-plugin" target="_blank">terence/wp-plugin</a></p>
+            </div>
+
+            <div class="card">
+                <h2>Current Settings</h2>
+                <?php
+                $options = get_option('wp_plugin_options', []);
+                $enabled = isset($options['enable_feature']) ? $options['enable_feature'] : false;
+                $debug = isset($options['debug_mode']) ? $options['debug_mode'] : false;
+                $has_api_key = !empty($options['api_key']);
+                ?>
+                <table class="form-table">
+                    <tr>
+                        <th>Feature Status:</th>
+                        <td>
+                            <?php if ($enabled): ?>
+                                <span style="color: green;">✓ Enabled</span>
+                            <?php else: ?>
+                                <span style="color: #999;">○ Disabled</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>API Key:</th>
+                        <td>
+                            <?php if ($has_api_key): ?>
+                                <span style="color: green;">✓ Configured</span>
+                            <?php else: ?>
+                                <span style="color: #999;">○ Not set</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Debug Mode:</th>
+                        <td>
+                            <?php if ($debug): ?>
+                                <span style="color: orange;">⚠ Enabled</span>
+                            <?php else: ?>
+                                <span style="color: green;">✓ Disabled</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </table>
+                <p><a href="?page=wp-plugin-settings" class="button button-secondary">Manage Settings</a></p>
             </div>
 
             <div class="card">
