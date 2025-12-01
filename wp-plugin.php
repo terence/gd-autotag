@@ -21,6 +21,7 @@ if (! defined('WPINC')) {
 define('WP_PLUGIN_VERSION', '0.1.1');
 define('WP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WP_PLUGIN_FILE', __FILE__);
+define('WP_PLUGIN_ROOT', __DIR__);
 
 // Load composer autoloader when present
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
@@ -29,7 +30,24 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 
 // Load the plugin bootstrap
 if (! class_exists('WpPlugin\\Plugin')) {
-    require_once __DIR__ . '/src/Plugin.php';
+    require_once WP_PLUGIN_ROOT . '/src/Plugin.php';
+}
+
+// Fallback includes when Composer autoloader isn't available (e.g., zipped deployments)
+if (! class_exists('WpPlugin\\Admin\\Admin')) {
+    require_once WP_PLUGIN_ROOT . '/src/Admin/Admin.php';
+}
+
+if (! class_exists('WpPlugin\\Frontend\\Frontend')) {
+    require_once WP_PLUGIN_ROOT . '/src/Frontend/Frontend.php';
+}
+
+if (! class_exists('WpPlugin\\PostTagger')) {
+    require_once WP_PLUGIN_ROOT . '/src/PostTagger.php';
+}
+
+if (! class_exists('WpPlugin\\AITagOptimizer')) {
+    require_once WP_PLUGIN_ROOT . '/src/AITagOptimizer.php';
 }
 
 // Load plugin-update-checker via submodule if not already available through Composer
