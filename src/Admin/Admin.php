@@ -27,15 +27,10 @@ class Admin
 
     public function add_action_links($links): array
     {
-        $icon_url = esc_url(plugin_dir_url($this->file) . 'assets/img/glitchdata_logo1.png');
-        $icon_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin')) . '" aria-label="wp_plugin">'
-            . '<img src="' . $icon_url . '" alt="wp_plugin" style="width:16px;height:16px;vertical-align:middle;border-radius:2px;" />'
-            . '</a>';
-
         $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin-settings')) . '">Settings</a>';
         $dashboard_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin')) . '">Dashboard</a>';
 
-        array_unshift($links, $settings_link, $dashboard_link, $icon_link);
+        array_unshift($links, $settings_link, $dashboard_link);
         
         return $links;
     }
