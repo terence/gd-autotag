@@ -126,30 +126,6 @@ class Admin
             'wp_plugin_auto_tagging_section'
         );
         
-        add_settings_field(
-            'ai_optimization_enabled',
-            'AI Tag Optimization',
-            [$this, 'render_ai_optimization_field'],
-            'wp-plugin-auto-tagging',
-            'wp_plugin_auto_tagging_section'
-        );
-        
-        add_settings_field(
-            'ai_provider',
-            'AI Provider',
-            [$this, 'render_ai_provider_field'],
-            'wp-plugin-auto-tagging',
-            'wp_plugin_auto_tagging_section'
-        );
-        
-        add_settings_field(
-            'ai_api_key',
-            'AI API Key',
-            [$this, 'render_ai_api_key_field'],
-            'wp-plugin-auto-tagging',
-            'wp_plugin_auto_tagging_section'
-        );
-        
         // Advanced Settings Section
         add_settings_section(
             'wp_plugin_advanced_section',
@@ -163,6 +139,30 @@ class Admin
             'debug_mode',
             'Debug Mode',
             [$this, 'render_debug_mode_field'],
+            'wp-plugin-advanced',
+            'wp_plugin_advanced_section'
+        );
+
+        add_settings_field(
+            'ai_optimization_enabled',
+            'AI Tag Optimization',
+            [$this, 'render_ai_optimization_field'],
+            'wp-plugin-advanced',
+            'wp_plugin_advanced_section'
+        );
+        
+        add_settings_field(
+            'ai_provider',
+            'AI Provider',
+            [$this, 'render_ai_provider_field'],
+            'wp-plugin-advanced',
+            'wp_plugin_advanced_section'
+        );
+        
+        add_settings_field(
+            'ai_api_key',
+            'AI API Key',
+            [$this, 'render_ai_api_key_field'],
             'wp-plugin-advanced',
             'wp_plugin_advanced_section'
         );

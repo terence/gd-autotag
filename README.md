@@ -157,7 +157,7 @@ Enable AI integration to enhance tag quality with semantic understanding and SEO
 
 **Configuration:**
 
-1. Enable "AI Tag Optimization" in Auto Tagging settings
+1. Enable "AI Tag Optimization" under the Advanced settings tab
 2. Select your AI provider (OpenAI, Anthropic, Google, or Custom)
 3. Enter your provider's API key
 4. Configure maximum tags per post (1-50)
