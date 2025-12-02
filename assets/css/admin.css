@@ -157,3 +157,36 @@
 	opacity: 0;
 	transition: opacity .15s ease;
 }
+
+.wp-plugin-dashboard-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 24px;
+	align-items: flex-start;
+	margin-top: 20px;
+}
+
+.wp-plugin-dashboard-column {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	flex: 1 1 320px;
+}
+
+.wp-plugin-dashboard-column--main {
+	flex: 2 1 640px;
+}
+
+.wp-plugin-dashboard-column--sidebar {
+	flex: 1 1 280px;
+}
+
+@media (max-width: 960px) {
+	.wp-plugin-dashboard-grid {
+		flex-direction: column;
+	}
+
+	.wp-plugin-dashboard-column {
+		flex: 1 1 auto;
+	}
+}

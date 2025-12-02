@@ -185,185 +185,103 @@ class Admin
             $sanitized['enable_feature'] = (bool) $input['enable_feature'];
         }
         
-                ?>
-                <div class="wp-plugin-dashboard-grid">
-                    <div class="wp-plugin-dashboard-column wp-plugin-dashboard-column--main">
-                        <div class="card">
-                            <h2>Posts Summary</h2>
-                            <?php
-                            $post_counts = wp_count_posts('post');
-                            $published_posts = (int) ($post_counts->publish ?? 0);
-                            $draft_posts = (int) ($post_counts->draft ?? 0);
-                            $scheduled_posts = (int) ($post_counts->future ?? 0);
-                            $posts_with_tags = $this->get_posts_with_tags_count();
-                            $posts_without_tags = max(0, $published_posts - $posts_with_tags);
-                            $tag_coverage = $published_posts > 0 ? round(($posts_with_tags / $published_posts) * 100) : 0;
-                            $total_tags = wp_count_terms('post_tag', ['hide_empty' => false]);
-
-                            $timeline = $this->get_monthly_post_stats(12);
-                            $timelineMax = 0;
-                            foreach ($timeline as $point) {
-                                $timelineMax = max($timelineMax, $point['total']);
-                            }
-                            $timelineMax = max(1, $timelineMax);
-                            ?>
-                            <div class="wp-plugin-summary-grid">
-                                <div class="summary-item">
-                                    <span class="label">Published Posts</span>
-                                    <span class="value"><?php echo number_format_i18n($published_posts); ?></span>
-                                </div>
-                                <div class="summary-item">
-                                    <span class="label">Drafts</span>
-                                    <span class="value"><?php echo number_format_i18n($draft_posts); ?></span>
-                                </div>
-                                <div class="summary-item">
-                                    <span class="label">Scheduled</span>
-                                    <span class="value"><?php echo number_format_i18n($scheduled_posts); ?></span>
-                                </div>
-                                <div class="summary-item">
-                                    <span class="label">Total Tags</span>
-                                    <span class="value"><?php echo number_format_i18n($total_tags); ?></span>
-                                </div>
-                                <div class="summary-item">
-                                    <span class="label">Tagged Posts</span>
-                                    <span class="value success"><?php echo number_format_i18n($posts_with_tags); ?></span>
-                                </div>
-                                <div class="summary-item">
-                                    <span class="label">Untagged Posts</span>
-                                    <span class="value warning"><?php echo number_format_i18n($posts_without_tags); ?></span>
-                                </div>
-                                <div class="summary-item wide">
-                                    <span class="label">Tag Coverage</span>
-                                    <span class="value"><?php echo esc_html($tag_coverage); ?>%</span>
-                                </div>
-                            </div>
-
-                            <h3 style="margin-top: 20px;">Post Analytics (Last 12 Months)</h3>
-                            <div id="wp-plugin-post-timeline" class="wp-plugin-line-chart" aria-label="Posts over time">
-                                <noscript>Enable JavaScript to view the post analytics line chart.</noscript>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h2>Update Status</h2>
-                            <?php if ($manualCheckPerformed): ?>
-                                <div class="notice notice-success inline">
-                                    <p>✓ Checked for updates. Visit the <a href="<?php echo admin_url('plugins.php'); ?>">Plugins page</a> to see if updates are available.</p>
-                                </div>
-                            <?php endif; ?>
-                            <?php $this->display_update_info(); ?>
-                            <form method="post" style="margin-top: 20px;">
-                                <?php wp_nonce_field('wp_plugin_check_updates'); ?>
-                                <button type="submit" name="check_for_updates" class="button button-primary">
-                                    Check for Updates Now
-                                </button>
-                            </form>
-                            <p style="margin-top: 15px;">
-                                <em>Automatic checks run every 12 hours. Last check: <?php echo esc_html($this->get_last_check_time()); ?></em>
-                            </p>
-                        </div>
-
-                        <div class="card">
-                            <h2>About Updates</h2>
-                            <p>This plugin automatically checks for updates from GitHub. When a new release is published, you'll see an update notification in WordPress.</p>
-                            <p><strong>How to create a release:</strong></p>
-                            <ol>
-                                <li>Update the version number in <code>wp-plugin.php</code></li>
-                                <li>Create a new tag: <code>git tag v1.0.1</code></li>
-                                <li>Push the tag: <code>git push origin --tags</code></li>
-                                <li>Create a GitHub Release with a ZIP asset</li>
-                            </ol>
-                        </div>
-                    </div>
-
-                    <div class="wp-plugin-dashboard-column wp-plugin-dashboard-column--sidebar">
-                        <div class="card">
-                            <h2>Plugin Information</h2>
-                            <p><strong>Version:</strong> <?php echo esc_html(WP_PLUGIN_VERSION); ?></p>
-                            <p><strong>Update Source:</strong> GitHub Releases</p>
-                            <p><strong>Repository:</strong> <a href="https://github.com/terence/wp-plugin" target="_blank">terence/wp-plugin</a></p>
-                        </div>
-
-                        <div class="card">
-                            <h2>Current Settings</h2>
-                            <?php
-                            $options = get_option('wp_plugin_options', []);
-                            $enabled = isset($options['enable_feature']) ? $options['enable_feature'] : false;
-                            $debug = isset($options['debug_mode']) ? $options['debug_mode'] : false;
-                            $has_api_key = !empty($options['api_key']);
-                            $api_key_valid = $this->validate_api_key_format($options['api_key'] ?? '');
-                            $license_status = $options['api_key_license_status'] ?? '';
-                            $license_data = $options['api_key_license_data'] ?? [];
-                            $last_checked = $options['api_key_last_checked'] ?? 0;
-                            ?>
-                            <table class="form-table">
-                                <tr>
-                                    <th>Feature Status:</th>
-                                    <td>
-                                        <?php if ($enabled): ?>
-                                            <span style="color: green;">✓ Enabled</span>
-                                        <?php else: ?>
-                                            <span style="color: #999;">○ Disabled</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>API Key:</th>
-                                    <td>
-                                        <?php if ($has_api_key && $api_key_valid): ?>
-                                            <span style="color: green;">✓ Configured & Valid</span>
-                                            <span style="color: #666; font-size: 12px;">
-                                                (<?php echo esc_html(strlen($options['api_key'])); ?> characters)
-                                            </span>
-                                        <?php elseif ($has_api_key && !$api_key_valid): ?>
-                                            <span style="color: red;">✗ Invalid Format</span>
-                                        <?php else: ?>
-                                            <span style="color: #999;">○ Not set</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                                <?php if ($has_api_key && $api_key_valid): ?>
-                                <tr>
-                                    <th>License Status:</th>
-                                    <td>
-                                        <?php if ($license_status === 'valid'): ?>
-                                            <span style="color: green;">✓ Active License</span>
-                                            <?php if (!empty($license_data['license_type'])): ?>
-                                                <span style="color: #666; font-size: 12px;"> - <?php echo esc_html(ucfirst($license_data['license_type'])); ?></span>
-                                            <?php endif; ?>
-                                            <br>
-                                            <?php if (!empty($license_data['expires_at'])): ?>
-                                                <span style="color: #666; font-size: 12px;">Expires: <?php echo esc_html(date('Y-m-d', strtotime($license_data['expires_at']))); ?></span>
-                                            <?php endif; ?>
-                                            <?php if (!empty($license_data['customer_name'])): ?>
-                                                <br><span style="color: #666; font-size: 12px;">Licensed to: <?php echo esc_html($license_data['customer_name']); ?></span>
-                                            <?php endif; ?>
-                                        <?php elseif ($license_status === 'invalid'): ?>
-                                            <span style="color: red;">✗ License Verification Failed</span>
-                                        <?php else: ?>
-                                            <span style="color: #999;">○ Not Verified</span>
-                                        <?php endif; ?>
-                                        <?php if ($last_checked > 0): ?>
-                                            <br><span style="color: #999; font-size: 11px;">Last checked: <?php echo human_time_diff($last_checked); ?> ago</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                                <?php endif; ?>
-                                <tr>
-                                    <th>Debug Mode:</th>
-                                    <td>
-                                        <?php if ($debug): ?>
-                                            <span style="color: orange;">⚠ Enabled</span>
-                                        <?php else: ?>
-                                            <span style="color: green;">✓ Disabled</span>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <?php
+        if (isset($input['api_key'])) {
+            $api_key = sanitize_text_field($input['api_key']);
+            
+            // Validate API key format if provided
+            if (!empty($api_key)) {
+                // Check minimum length
+                if (strlen($api_key) < 20) {
+                    add_settings_error(
+                        'wp_plugin_messages',
+                        'wp_plugin_api_key_error',
+                        'API Key must be at least 20 characters long.',
+                        'error'
+                    );
+                }
+                // Check for valid characters (alphanumeric, dashes, underscores)
+                elseif (!preg_match('/^[a-zA-Z0-9_-]+$/', $api_key)) {
+                    add_settings_error(
+                        'wp_plugin_messages',
+                        'wp_plugin_api_key_error',
+                        'API Key can only contain letters, numbers, dashes, and underscores.',
+                        'error'
+                    );
+                }
+                else {
+                    // Validate with external license server
+                    $license_check = $this->verify_api_key_license($api_key);
+                    
+                    if ($license_check['valid']) {
+                        $sanitized['api_key'] = $api_key;
+                        $sanitized['api_key_license_status'] = 'valid';
+                        $sanitized['api_key_license_data'] = $license_check['data'];
+                        $sanitized['api_key_last_checked'] = time();
+                        
+                        add_settings_error(
+                            'wp_plugin_messages',
+                            'wp_plugin_api_key_success',
+                            'API Key validated successfully. License: ' . esc_html($license_check['data']['license_type'] ?? 'Active'),
+                            'success'
+                        );
+                    } else {
+                        $sanitized['api_key'] = $api_key;
+                        $sanitized['api_key_license_status'] = 'invalid';
+                        $sanitized['api_key_license_data'] = [];
+                        $sanitized['api_key_last_checked'] = time();
+                        
+                        add_settings_error(
+                            'wp_plugin_messages',
+                            'wp_plugin_api_key_error',
+                            'API Key format is valid, but license verification failed: ' . esc_html($license_check['message']),
+                            'error'
+                        );
+                    }
+                }
+            } else {
+                $sanitized['api_key'] = '';
+                $sanitized['api_key_license_status'] = '';
+                $sanitized['api_key_license_data'] = [];
+            }
+        }
+        
+        if (isset($input['debug_mode'])) {
+            $sanitized['debug_mode'] = (bool) $input['debug_mode'];
+        }
+        
+        if (isset($input['auto_tag_enabled'])) {
+            $sanitized['auto_tag_enabled'] = (bool) $input['auto_tag_enabled'];
+        }
+        
+        if (isset($input['max_tags_per_post'])) {
+            $max_tags = absint($input['max_tags_per_post']);
+            if ($max_tags < 1) {
+                $max_tags = 10;
+            } elseif ($max_tags > 50) {
+                $max_tags = 50;
+            }
+            $sanitized['max_tags_per_post'] = $max_tags;
+        } else {
+            $sanitized['max_tags_per_post'] = 10;
+        }
+        
+        if (isset($input['tag_exclusion_list'])) {
+            $sanitized['tag_exclusion_list'] = sanitize_textarea_field($input['tag_exclusion_list']);
+        }
+        
+        if (isset($input['ai_optimization_enabled'])) {
+            $sanitized['ai_optimization_enabled'] = (bool) $input['ai_optimization_enabled'];
+        }
+        
+        if (isset($input['ai_provider'])) {
+            $sanitized['ai_provider'] = sanitize_text_field($input['ai_provider']);
+        }
+        
+        if (isset($input['ai_api_key'])) {
+            $sanitized['ai_api_key'] = sanitize_text_field($input['ai_api_key']);
+        }
+        
+        return $sanitized;
     }
 
     public function render_api_key_field(): void
@@ -564,176 +482,181 @@ class Admin
             <?php
             $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'dashboard';
             if ($tab === 'dashboard') {
-                // ...existing code for dashboard cards...
                 ?>
-                <div class="card">
-                    <h2>Plugin Information</h2>
-                    <p><strong>Version:</strong> <?php echo esc_html(WP_PLUGIN_VERSION); ?></p>
-                    <p><strong>Update Source:</strong> GitHub Releases</p>
-                    <p><strong>Repository:</strong> <a href="https://github.com/terence/wp-plugin" target="_blank">terence/wp-plugin</a></p>
-                </div>
+                <div class="wp-plugin-dashboard-grid">
+                    <div class="wp-plugin-dashboard-column wp-plugin-dashboard-column--main">
+                        <div class="card">
+                            <h2>Posts Summary</h2>
+                            <?php
+                            $post_counts = wp_count_posts('post');
+                            $published_posts = (int) ($post_counts->publish ?? 0);
+                            $draft_posts = (int) ($post_counts->draft ?? 0);
+                            $scheduled_posts = (int) ($post_counts->future ?? 0);
+                            $posts_with_tags = $this->get_posts_with_tags_count();
+                            $posts_without_tags = max(0, $published_posts - $posts_with_tags);
+                            $tag_coverage = $published_posts > 0 ? round(($posts_with_tags / $published_posts) * 100) : 0;
+                            $total_tags = wp_count_terms('post_tag', ['hide_empty' => false]);
 
-                <div class="card">
-                    <h2>Current Settings</h2>
-                    <?php
-                    $options = get_option('wp_plugin_options', []);
-                    $enabled = isset($options['enable_feature']) ? $options['enable_feature'] : false;
-                    $debug = isset($options['debug_mode']) ? $options['debug_mode'] : false;
-                    $has_api_key = !empty($options['api_key']);
-                    $api_key_valid = $this->validate_api_key_format($options['api_key'] ?? '');
-                    $license_status = $options['api_key_license_status'] ?? '';
-                    $license_data = $options['api_key_license_data'] ?? [];
-                    $last_checked = $options['api_key_last_checked'] ?? 0;
-                    ?>
-                    <table class="form-table">
-                        <tr>
-                            <th>Feature Status:</th>
-                            <td>
-                                <?php if ($enabled): ?>
-                                    <span style="color: green;">✓ Enabled</span>
-                                <?php else: ?>
-                                    <span style="color: #999;">○ Disabled</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>API Key:</th>
-                            <td>
+                            $timeline = $this->get_monthly_post_stats(12);
+                            $timelineMax = 0;
+                            foreach ($timeline as $point) {
+                                $timelineMax = max($timelineMax, $point['total']);
+                            }
+                            $timelineMax = max(1, $timelineMax);
+                            ?>
+                            <div class="wp-plugin-summary-grid">
+                                <div class="summary-item">
+                                    <span class="label">Published Posts</span>
+                                    <span class="value"><?php echo number_format_i18n($published_posts); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Drafts</span>
+                                    <span class="value"><?php echo number_format_i18n($draft_posts); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Scheduled</span>
+                                    <span class="value"><?php echo number_format_i18n($scheduled_posts); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Total Tags</span>
+                                    <span class="value"><?php echo number_format_i18n($total_tags); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Tagged Posts</span>
+                                    <span class="value success"><?php echo number_format_i18n($posts_with_tags); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Untagged Posts</span>
+                                    <span class="value warning"><?php echo number_format_i18n($posts_without_tags); ?></span>
+                                </div>
+                                <div class="summary-item wide">
+                                    <span class="label">Tag Coverage</span>
+                                    <span class="value"><?php echo esc_html($tag_coverage); ?>%</span>
+                                </div>
+                            </div>
+
+                            <h3 style="margin-top: 20px;">Post Analytics (Last 12 Months)</h3>
+                            <div id="wp-plugin-post-timeline" class="wp-plugin-line-chart" aria-label="Posts over time">
+                                <noscript>Enable JavaScript to view the post analytics line chart.</noscript>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h2>Update Status</h2>
+                            <?php if ($manualCheckPerformed): ?>
+                                <div class="notice notice-success inline">
+                                    <p>✓ Checked for updates. Visit the <a href="<?php echo admin_url('plugins.php'); ?>">Plugins page</a> to see if updates are available.</p>
+                                </div>
+                            <?php endif; ?>
+                            <?php $this->display_update_info(); ?>
+                            <form method="post" style="margin-top: 20px;">
+                                <?php wp_nonce_field('wp_plugin_check_updates'); ?>
+                                <button type="submit" name="check_for_updates" class="button button-primary">
+                                    Check for Updates Now
+                                </button>
+                            </form>
+                            <p style="margin-top: 15px;">
+                                <em>Automatic checks run every 12 hours. Last check: <?php echo esc_html($this->get_last_check_time()); ?></em>
+                            </p>
+                        </div>
+
+                        <div class="card">
+                            <h2>About Updates</h2>
+                            <p>This plugin automatically checks for updates from GitHub. When a new release is published, you'll see an update notification in WordPress.</p>
+                            <p><strong>How to create a release:</strong></p>
+                            <ol>
+                                <li>Update the version number in <code>wp-plugin.php</code></li>
+                                <li>Create a new tag: <code>git tag v1.0.1</code></li>
+                                <li>Push the tag: <code>git push origin --tags</code></li>
+                                <li>Create a GitHub Release with a ZIP asset</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="wp-plugin-dashboard-column wp-plugin-dashboard-column--sidebar">
+                        <div class="card">
+                            <h2>Plugin Information</h2>
+                            <p><strong>Version:</strong> <?php echo esc_html(WP_PLUGIN_VERSION); ?></p>
+                            <p><strong>Update Source:</strong> GitHub Releases</p>
+                            <p><strong>Repository:</strong> <a href="https://github.com/terence/wp-plugin" target="_blank">terence/wp-plugin</a></p>
+                        </div>
+
+                        <div class="card">
+                            <h2>Current Settings</h2>
+                            <?php
+                            $options = get_option('wp_plugin_options', []);
+                            $enabled = isset($options['enable_feature']) ? $options['enable_feature'] : false;
+                            $debug = isset($options['debug_mode']) ? $options['debug_mode'] : false;
+                            $has_api_key = !empty($options['api_key']);
+                            $api_key_valid = $this->validate_api_key_format($options['api_key'] ?? '');
+                            $license_status = $options['api_key_license_status'] ?? '';
+                            $license_data = $options['api_key_license_data'] ?? [];
+                            $last_checked = $options['api_key_last_checked'] ?? 0;
+                            ?>
+                            <table class="form-table">
+                                <tr>
+                                    <th>Feature Status:</th>
+                                    <td>
+                                        <?php if ($enabled): ?>
+                                            <span style="color: green;">✓ Enabled</span>
+                                        <?php else: ?>
+                                            <span style="color: #999;">○ Disabled</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>API Key:</th>
+                                    <td>
+                                        <?php if ($has_api_key && $api_key_valid): ?>
+                                            <span style="color: green;">✓ Configured & Valid</span>
+                                            <span style="color: #666; font-size: 12px;">(<?php echo esc_html(strlen($options['api_key'])); ?> characters)</span>
+                                        <?php elseif ($has_api_key && !$api_key_valid): ?>
+                                            <span style="color: red;">✗ Invalid Format</span>
+                                        <?php else: ?>
+                                            <span style="color: #999;">○ Not set</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
                                 <?php if ($has_api_key && $api_key_valid): ?>
-                                    <span style="color: green;">✓ Configured & Valid</span>
-                                    <span style="color: #666; font-size: 12px;">(<?php echo esc_html(strlen($options['api_key'])); ?> characters)</span>
-                                <?php elseif ($has_api_key && !$api_key_valid): ?>
-                                    <span style="color: red;">✗ Invalid Format</span>
-                                <?php else: ?>
-                                    <span style="color: #999;">○ Not set</span>
+                                <tr>
+                                    <th>License Status:</th>
+                                    <td>
+                                        <?php if ($license_status === 'valid'): ?>
+                                            <span style="color: green;">✓ Active License</span>
+                                            <?php if (!empty($license_data['license_type'])): ?>
+                                                <span style="color: #666; font-size: 12px;"> - <?php echo esc_html(ucfirst($license_data['license_type'])); ?></span>
+                                            <?php endif; ?>
+                                            <br>
+                                            <?php if (!empty($license_data['expires_at'])): ?>
+                                                <span style="color: #666; font-size: 12px;">Expires: <?php echo esc_html(date('Y-m-d', strtotime($license_data['expires_at']))); ?></span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($license_data['customer_name'])): ?>
+                                                <br><span style="color: #666; font-size: 12px;">Licensed to: <?php echo esc_html($license_data['customer_name']); ?></span>
+                                            <?php endif; ?>
+                                        <?php elseif ($license_status === 'invalid'): ?>
+                                            <span style="color: red;">✗ License Verification Failed</span>
+                                        <?php else: ?>
+                                            <span style="color: #999;">○ Not Verified</span>
+                                        <?php endif; ?>
+                                        <?php if ($last_checked > 0): ?>
+                                            <br><span style="color: #999; font-size: 11px;">Last checked: <?php echo human_time_diff($last_checked); ?> ago</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
                                 <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php if ($has_api_key && $api_key_valid): ?>
-                        <tr>
-                            <th>License Status:</th>
-                            <td>
-                                <?php if ($license_status === 'valid'): ?>
-                                    <span style="color: green;">✓ Active License</span>
-                                    <?php if (!empty($license_data['license_type'])): ?>
-                                        <span style="color: #666; font-size: 12px;"> - <?php echo esc_html(ucfirst($license_data['license_type'])); ?></span>
-                                    <?php endif; ?>
-                                    <br>
-                                    <?php if (!empty($license_data['expires_at'])): ?>
-                                        <span style="color: #666; font-size: 12px;">Expires: <?php echo esc_html(date('Y-m-d', strtotime($license_data['expires_at']))); ?></span>
-                                    <?php endif; ?>
-                                    <?php if (!empty($license_data['customer_name'])): ?>
-                                        <br><span style="color: #666; font-size: 12px;">Licensed to: <?php echo esc_html($license_data['customer_name']); ?></span>
-                                    <?php endif; ?>
-                                <?php elseif ($license_status === 'invalid'): ?>
-                                    <span style="color: red;">✗ License Verification Failed</span>
-                                <?php else: ?>
-                                    <span style="color: #999;">○ Not Verified</span>
-                                <?php endif; ?>
-                                <?php if ($last_checked > 0): ?>
-                                    <br><span style="color: #999; font-size: 11px;">Last checked: <?php echo human_time_diff($last_checked); ?> ago</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endif; ?>
-                        <tr>
-                            <th>Debug Mode:</th>
-                            <td>
-                                <?php if ($debug): ?>
-                                    <span style="color: orange;">⚠ Enabled</span>
-                                <?php else: ?>
-                                    <span style="color: green;">✓ Disabled</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <h2>Posts Summary</h2>
-                    <?php
-                    $post_counts = wp_count_posts('post');
-                    $published_posts = (int) ($post_counts->publish ?? 0);
-                    $draft_posts = (int) ($post_counts->draft ?? 0);
-                    $scheduled_posts = (int) ($post_counts->future ?? 0);
-                    $posts_with_tags = $this->get_posts_with_tags_count();
-                    $posts_without_tags = max(0, $published_posts - $posts_with_tags);
-                    $tag_coverage = $published_posts > 0 ? round(($posts_with_tags / $published_posts) * 100) : 0;
-                    $total_tags = wp_count_terms('post_tag', ['hide_empty' => false]);
-
-                    $timeline = $this->get_monthly_post_stats(12);
-                    $timelineMax = 0;
-                    foreach ($timeline as $point) {
-                        $timelineMax = max($timelineMax, $point['total']);
-                    }
-                    $timelineMax = max(1, $timelineMax);
-                    ?>
-                    <div class="wp-plugin-summary-grid">
-                        <div class="summary-item">
-                            <span class="label">Published Posts</span>
-                            <span class="value"><?php echo number_format_i18n($published_posts); ?></span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="label">Drafts</span>
-                            <span class="value"><?php echo number_format_i18n($draft_posts); ?></span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="label">Scheduled</span>
-                            <span class="value"><?php echo number_format_i18n($scheduled_posts); ?></span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="label">Total Tags</span>
-                            <span class="value"><?php echo number_format_i18n($total_tags); ?></span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="label">Tagged Posts</span>
-                            <span class="value success"><?php echo number_format_i18n($posts_with_tags); ?></span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="label">Untagged Posts</span>
-                            <span class="value warning"><?php echo number_format_i18n($posts_without_tags); ?></span>
-                        </div>
-                        <div class="summary-item wide">
-                            <span class="label">Tag Coverage</span>
-                            <span class="value"><?php echo esc_html($tag_coverage); ?>%</span>
+                                <tr>
+                                    <th>Debug Mode:</th>
+                                    <td>
+                                        <?php if ($debug): ?>
+                                            <span style="color: orange;">⚠ Enabled</span>
+                                        <?php else: ?>
+                                            <span style="color: green;">✓ Disabled</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
-
-                    <h3 style="margin-top: 20px;">Post Analytics (Last 12 Months)</h3>
-                    <div id="wp-plugin-post-timeline" class="wp-plugin-line-chart" aria-label="Posts over time">
-                        <noscript>Enable JavaScript to view the post analytics line chart.</noscript>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Update Status</h2>
-                    <?php if ($manualCheckPerformed): ?>
-                        <div class="notice notice-success inline">
-                            <p>✓ Checked for updates. Visit the <a href="<?php echo admin_url('plugins.php'); ?>">Plugins page</a> to see if updates are available.</p>
-                        </div>
-                    <?php endif; ?>
-                    <?php $this->display_update_info(); ?>
-                    <form method="post" style="margin-top: 20px;">
-                        <?php wp_nonce_field('wp_plugin_check_updates'); ?>
-                        <button type="submit" name="check_for_updates" class="button button-primary">
-                            Check for Updates Now
-                        </button>
-                    </form>
-                    <p style="margin-top: 15px;">
-                        <em>Automatic checks run every 12 hours. Last check: <?php echo esc_html($this->get_last_check_time()); ?></em>
-                    </p>
-                </div>
-
-                <div class="card">
-                    <h2>About Updates</h2>
-                    <p>This plugin automatically checks for updates from GitHub. When a new release is published, you'll see an update notification in WordPress.</p>
-                    <p><strong>How to create a release:</strong></p>
-                    <ol>
-                        <li>Update the version number in <code>wp-plugin.php</code></li>
-                        <li>Create a new tag: <code>git tag v1.0.1</code></li>
-                        <li>Push the tag: <code>git push origin --tags</code></li>
-                        <li>Create a GitHub Release with a ZIP asset</li>
-                    </ol>
                 </div>
                 <?php
             } elseif ($tab === 'settings') {
