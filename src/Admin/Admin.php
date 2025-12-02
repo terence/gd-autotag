@@ -637,8 +637,72 @@ class Admin
                 <div class="card">
                     <h2>Posts Summary</h2>
                     <?php
-                    // ...existing code for posts summary...
+                    $post_counts = wp_count_posts('post');
+                    $published_posts = (int) ($post_counts->publish ?? 0);
+                    $draft_posts = (int) ($post_counts->draft ?? 0);
+                    $scheduled_posts = (int) ($post_counts->future ?? 0);
+                    $posts_with_tags = $this->get_posts_with_tags_count();
+                    $posts_without_tags = max(0, $published_posts - $posts_with_tags);
+                    $tag_coverage = $published_posts > 0 ? round(($posts_with_tags / $published_posts) * 100) : 0;
+                    $total_tags = wp_count_terms('post_tag', ['hide_empty' => false]);
+
+                    $timeline = $this->get_monthly_post_stats(12);
+                    $timelineMax = 0;
+                    foreach ($timeline as $point) {
+                        $timelineMax = max($timelineMax, $point['total']);
+                    }
+                    $timelineMax = max(1, $timelineMax);
                     ?>
+                    <div class="wp-plugin-summary-grid">
+                        <div class="summary-item">
+                            <span class="label">Published Posts</span>
+                            <span class="value"><?php echo number_format_i18n($published_posts); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Drafts</span>
+                            <span class="value"><?php echo number_format_i18n($draft_posts); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Scheduled</span>
+                            <span class="value"><?php echo number_format_i18n($scheduled_posts); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Total Tags</span>
+                            <span class="value"><?php echo number_format_i18n($total_tags); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Tagged Posts</span>
+                            <span class="value success"><?php echo number_format_i18n($posts_with_tags); ?></span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">Untagged Posts</span>
+                            <span class="value warning"><?php echo number_format_i18n($posts_without_tags); ?></span>
+                        </div>
+                        <div class="summary-item wide">
+                            <span class="label">Tag Coverage</span>
+                            <span class="value"><?php echo esc_html($tag_coverage); ?>%</span>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 20px;">Post Analytics (Last 12 Months)</h3>
+                    <div class="wp-plugin-posts-timeline" aria-label="Posts published per month">
+                        <?php foreach ($timeline as $point): 
+                            $height = round(($point['total'] / $timelineMax) * 100);
+                            $taggedPct = $point['total'] > 0 ? round(($point['tagged'] / $point['total']) * 100) : 0;
+                            $untaggedPct = 100 - $taggedPct;
+                            $title = esc_attr(sprintf('%s %d — Total: %d, Tagged: %d, Untagged: %d', $point['label'], $point['year'], $point['total'], $point['tagged'], $point['untagged']));
+                        ?>
+                            <div class="wp-plugin-post-bar" style="height: <?php echo (int) $height; ?>%;" title="<?php echo $title; ?>" aria-label="<?php echo $title; ?>">
+                                <span class="segment tagged" style="height: <?php echo (int) $taggedPct; ?>%"></span>
+                                <span class="segment untagged" style="height: <?php echo (int) $untaggedPct; ?>%"></span>
+                                <span class="value"><?php echo (int) $point['total']; ?></span>
+                                <span class="label"><?php echo esc_html($point['label']); ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="wp-plugin-legend">
+                        <span class="dot tagged"></span> Tagged &nbsp;&nbsp; <span class="dot untagged"></span> Untagged
+                    </div>
                 </div>
 
                 <div class="card">
@@ -788,6 +852,68 @@ class Admin
         
         $count = $wpdb->get_var($query);
         return (int) $count;
+    }
+
+    private function get_monthly_post_stats(int $months = 12): array
+    {
+        global $wpdb;
+
+        $months = max(1, min(24, $months));
+        $startDate = date('Y-m-01 00:00:00', strtotime('-' . ($months - 1) . ' months'));
+
+        $totals = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT YEAR(post_date) AS y, MONTH(post_date) AS m, COUNT(*) AS cnt
+                 FROM {$wpdb->posts}
+                 WHERE post_type = 'post' AND post_status = 'publish' AND post_date >= %s
+                 GROUP BY y, m",
+                $startDate
+            ),
+            ARRAY_A
+        );
+
+        $tagged = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT YEAR(p.post_date) AS y, MONTH(p.post_date) AS m, COUNT(DISTINCT p.ID) AS cnt
+                 FROM {$wpdb->posts} p
+                 INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+                 INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'post_tag'
+                 WHERE p.post_type = 'post' AND p.post_status = 'publish' AND p.post_date >= %s
+                 GROUP BY y, m",
+                $startDate
+            ),
+            ARRAY_A
+        );
+
+        $totalMap = [];
+        foreach ($totals ?? [] as $row) {
+            $key = sprintf('%04d-%02d', $row['y'], $row['m']);
+            $totalMap[$key] = (int) $row['cnt'];
+        }
+
+        $taggedMap = [];
+        foreach ($tagged ?? [] as $row) {
+            $key = sprintf('%04d-%02d', $row['y'], $row['m']);
+            $taggedMap[$key] = (int) $row['cnt'];
+        }
+
+        $series = [];
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $ts = strtotime("-{$i} months", strtotime(date('Y-m-01')));
+            $key = date('Y-m', $ts);
+            $total = $totalMap[$key] ?? 0;
+            $taggedCount = min($total, $taggedMap[$key] ?? 0);
+            $series[] = [
+                'key' => $key,
+                'label' => date('M', $ts),
+                'year' => (int) date('Y', $ts),
+                'total' => $total,
+                'tagged' => $taggedCount,
+                'untagged' => max(0, $total - $taggedCount),
+            ];
+        }
+
+        return $series;
     }
 
     private function validate_api_key_format(string $api_key): bool
