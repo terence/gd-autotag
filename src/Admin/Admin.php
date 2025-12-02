@@ -93,6 +93,14 @@ class Admin
             'wp-plugin-settings',
             'wp_plugin_general_section'
         );
+
+        add_settings_field(
+            'debug_mode',
+            'Debug Mode',
+            [$this, 'render_debug_mode_field'],
+            'wp-plugin-settings',
+            'wp_plugin_general_section'
+        );
         
         // Auto Tagging Settings Section
         add_settings_section(
@@ -134,15 +142,6 @@ class Admin
             'wp-plugin-advanced'
         );
         
-        // Example setting: Debug mode
-        add_settings_field(
-            'debug_mode',
-            'Debug Mode',
-            [$this, 'render_debug_mode_field'],
-            'wp-plugin-advanced',
-            'wp_plugin_advanced_section'
-        );
-
         add_settings_field(
             'ai_optimization_enabled',
             'AI Tag Optimization',
