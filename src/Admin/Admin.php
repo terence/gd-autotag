@@ -102,10 +102,10 @@ class Admin
             'wp_plugin_general_section'
         );
         
-        // Auto Tagging Settings Section
+        // Auto Tag Settings Section
         add_settings_section(
             'wp_plugin_auto_tagging_section',
-            'Auto Tagging Settings',
+            'Auto Tag Settings',
             [$this, 'render_auto_tagging_section'],
             'wp-plugin-auto-tagging'
         );
@@ -644,7 +644,7 @@ class Admin
             <h2 class="nav-tab-wrapper">
                 <a href="?page=wp-plugin&tab=dashboard" class="nav-tab <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'dashboard') ? 'nav-tab-active' : ''; ?>">Dashboard</a>
                 <a href="?page=wp-plugin&tab=settings" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'settings') ? 'nav-tab-active' : ''; ?>">Settings</a>
-                <a href="?page=wp-plugin&tab=auto-tagging" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-tagging') ? 'nav-tab-active' : ''; ?>">Auto Tagging</a>
+                <a href="?page=wp-plugin&tab=auto-tagging" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-tagging') ? 'nav-tab-active' : ''; ?>">Auto Tag</a>
                 <a href="?page=wp-plugin&tab=auto-categories" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-categories') ? 'nav-tab-active' : ''; ?>">Auto Categories</a>
                 <a href="?page=wp-plugin&tab=advanced" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'advanced') ? 'nav-tab-active' : ''; ?>">Advanced</a>
             </h2>
@@ -834,7 +834,7 @@ class Admin
                     <?php
                     settings_fields('wp_plugin_settings');
                     do_settings_sections('wp-plugin-auto-tagging');
-                    submit_button('Save Auto Tagging Settings');
+                    submit_button('Save Auto Tag Settings');
                     ?>
                 </form>
                 <?php
