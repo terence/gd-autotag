@@ -801,6 +801,7 @@ class Admin
                                 $timelineMax = max($timelineMax, $point['total']);
                             }
                             $timelineMax = max(1, $timelineMax);
+                            $tagStats = $this->get_tag_usage_stats(8);
                             ?>
                             <div class="wp-plugin-summary-grid">
                                 <div class="summary-item">
@@ -837,6 +838,38 @@ class Admin
                             <div id="wp-plugin-post-timeline" class="wp-plugin-line-chart" aria-label="Posts over time">
                                 <noscript>Enable JavaScript to view the post analytics line chart.</noscript>
                             </div>
+                        </div>
+
+                        <div class="card">
+                            <h2>Tag Summary</h2>
+                            <div class="wp-plugin-summary-grid">
+                                <div class="summary-item">
+                                    <span class="label">Avg Tags / Tagged Post</span>
+                                    <span class="value"><?php echo esc_html(number_format_i18n($tagStats['average_tags_per_tagged_post'] ?? 0, 1)); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Total Tag Assignments</span>
+                                    <span class="value"><?php echo number_format_i18n($tagStats['total_assignments'] ?? 0); ?></span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">Unused Tags</span>
+                                    <span class="value warning"><?php echo number_format_i18n($tagStats['unused_tags'] ?? 0); ?></span>
+                                </div>
+                            </div>
+
+                            <h3 style="margin-top: 20px;">Top Tags</h3>
+                            <?php if (!empty($tagStats['top_tags'])): ?>
+                                <ul class="wp-plugin-top-tags-list">
+                                    <?php foreach ($tagStats['top_tags'] as $tag): ?>
+                                        <li>
+                                            <span class="tag-name"><?php echo esc_html($tag['name']); ?></span>
+                                            <span class="tag-count"><?php echo number_format_i18n($tag['count']); ?> posts</span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php else: ?>
+                                <p>No tag data available yet.</p>
+                            <?php endif; ?>
                         </div>
 
                         <div class="card">
@@ -1134,6 +1167,61 @@ class Admin
         }
 
         return $series;
+    }
+
+    private function get_tag_usage_stats(int $limit = 8): array
+    {
+        global $wpdb;
+
+        $limit = max(1, min(20, $limit));
+
+        $totalAssignments = (int) $wpdb->get_var(
+            "SELECT COUNT(*)
+             FROM {$wpdb->term_relationships} tr
+             INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+             WHERE tt.taxonomy = 'post_tag'"
+        );
+
+        $unusedTags = (int) $wpdb->get_var(
+            "SELECT COUNT(*)
+             FROM {$wpdb->term_taxonomy}
+             WHERE taxonomy = 'post_tag' AND count = 0"
+        );
+
+        $topTerms = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT t.name, tt.count
+                 FROM {$wpdb->terms} t
+                 INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+                 WHERE tt.taxonomy = 'post_tag'
+                 ORDER BY tt.count DESC
+                 LIMIT %d",
+                $limit
+            ),
+            ARRAY_A
+        );
+
+        $topTags = array_map(
+            function ($row) {
+                return [
+                    'name' => $row['name'],
+                    'count' => (int) $row['count'],
+                ];
+            },
+            $topTerms ?? []
+        );
+
+        $taggedPosts = $this->get_posts_with_tags_count();
+        $average = $taggedPosts > 0 && $totalAssignments > 0
+            ? round($totalAssignments / $taggedPosts, 1)
+            : 0;
+
+        return [
+            'top_tags' => $topTags,
+            'total_assignments' => $totalAssignments,
+            'unused_tags' => $unusedTags,
+            'average_tags_per_tagged_post' => $average,
+        ];
     }
 
     private function validate_api_key_format(string $api_key): bool

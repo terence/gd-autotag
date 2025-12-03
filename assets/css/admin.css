@@ -122,6 +122,31 @@
 	height: 240px;
 }
 
+.wp-plugin-top-tags-list {
+	list-style: none;
+	margin: 15px 0 0;
+	padding: 0;
+}
+
+.wp-plugin-top-tags-list li {
+	display: flex;
+	justify-content: space-between;
+	padding: 6px 0;
+	border-bottom: 1px solid #ececec;
+}
+
+.wp-plugin-top-tags-list li:last-child {
+	border-bottom: none;
+}
+
+.wp-plugin-top-tags-list .tag-name {
+	font-weight: 500;
+}
+
+.wp-plugin-top-tags-list .tag-count {
+	color: #666;
+}
+
 .wp-plugin-line-legend {
 	display: flex;
 	gap: 16px;
