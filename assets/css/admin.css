@@ -122,13 +122,6 @@
 	height: 240px;
 }
 
-.wp-plugin-pie-chart {
-	min-height: 260px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
 .wp-plugin-tag-analytics {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -136,10 +129,8 @@
 	margin-top: 15px;
 }
 
-.wp-plugin-tag-analytics__chart svg {
-	max-width: 320px;
-	width: 100%;
-	height: auto;
+.wp-plugin-bar-chart {
+	min-height: 260px;
 }
 
 .wp-plugin-top-tags-list {

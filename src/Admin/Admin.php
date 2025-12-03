@@ -31,7 +31,6 @@ class Admin
             $tagStats = $this->get_tag_usage_stats(8);
             wp_localize_script('wp-plugin-admin', 'wpPluginDashboardData', [
                 'postTimeline' => $this->get_monthly_post_stats(12),
-                'tagTimeline' => $this->get_monthly_tag_stats(12),
                 'topTags' => $tagStats['top_tags'] ?? [],
             ]);
         }
@@ -845,10 +844,7 @@ class Admin
 
                         <div class="card">
                             <h2>Tag Summary</h2>
-                            <p style="margin-top: -10px; color: #666;">Review tag coverage, trends, and the tags appearing most across your posts.</p>
-                            <div id="wp-plugin-tag-timeline" class="wp-plugin-line-chart" aria-label="Tag usage over time" style="margin-top: 12px;">
-                                <noscript>Enable JavaScript to view the tag analytics line chart.</noscript>
-                            </div>
+                            <p style="margin-top: -10px; color: #666;">Review tag coverage and the tags appearing most across your posts.</p>
                             <div class="wp-plugin-summary-grid">
                                 <div class="summary-item">
                                     <span class="label">Avg Tags / Tagged Post</span>
@@ -881,8 +877,8 @@ class Admin
                             <?php endif; ?>
                                 </div>
                                 <div class="wp-plugin-tag-analytics__chart">
-                                    <div id="wp-plugin-top-tags-chart" class="wp-plugin-pie-chart" aria-label="Top tags pie chart">
-                                        <noscript>Enable JavaScript to view the top tags pie chart.</noscript>
+                                    <div id="wp-plugin-top-tags-chart" class="wp-plugin-bar-chart" aria-label="Top tags bar chart">
+                                        <noscript>Enable JavaScript to view the top tags bar chart.</noscript>
                                     </div>
                                 </div>
                             </div>
@@ -1179,53 +1175,6 @@ class Admin
                 'total' => $total,
                 'tagged' => $taggedCount,
                 'untagged' => max(0, $total - $taggedCount),
-            ];
-        }
-
-        return $series;
-    }
-
-    private function get_monthly_tag_stats(int $months = 12): array
-    {
-        global $wpdb;
-
-        $months = max(1, min(24, $months));
-        $startDate = date('Y-m-01 00:00:00', strtotime('-' . ($months - 1) . ' months'));
-
-        $rows = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT YEAR(p.post_date) AS y, MONTH(p.post_date) AS m,
-                        COUNT(*) AS assignments,
-                        COUNT(DISTINCT tt.term_id) AS unique_tags
-                 FROM {$wpdb->posts} p
-                 INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-                 INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'post_tag'
-                 WHERE p.post_type = 'post' AND p.post_status = 'publish' AND p.post_date >= %s
-                 GROUP BY y, m",
-                $startDate
-            ),
-            ARRAY_A
-        );
-
-        $map = [];
-        foreach ($rows ?? [] as $row) {
-            $key = sprintf('%04d-%02d', $row['y'], $row['m']);
-            $map[$key] = [
-                'assignments' => (int) $row['assignments'],
-                'unique_tags' => (int) $row['unique_tags'],
-            ];
-        }
-
-        $series = [];
-        for ($i = $months - 1; $i >= 0; $i--) {
-            $ts = strtotime("-{$i} months", strtotime(date('Y-m-01')));
-            $key = date('Y-m', $ts);
-            $series[] = [
-                'key' => $key,
-                'label' => date('M', $ts),
-                'year' => (int) date('Y', $ts),
-                'assignments' => $map[$key]['assignments'] ?? 0,
-                'unique_tags' => $map[$key]['unique_tags'] ?? 0,
             ];
         }
 
