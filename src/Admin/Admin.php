@@ -349,22 +349,22 @@ class Admin
         return $sanitized;
     }
 
-    public function render_general_section(): void
+    public function render_general_section(array $section = []): void
     {
         echo '<p>Configure the core plugin behavior and API access.</p>';
     }
 
-    public function render_auto_tagging_section(): void
+    public function render_auto_tagging_section(array $section = []): void
     {
         echo '<p>Control how automatic tag generation behaves across your posts.</p>';
     }
 
-    public function render_auto_categories_section(): void
+    public function render_auto_categories_section(array $section = []): void
     {
         echo '<p>Configure how posts inherit categories automatically based on tags and content.</p>';
     }
 
-    public function render_advanced_section(): void
+    public function render_advanced_section(array $section = []): void
     {
         echo '<p>Advanced options for debugging, AI integrations, and power users.</p>';
     }

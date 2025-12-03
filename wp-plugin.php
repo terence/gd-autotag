@@ -57,6 +57,10 @@ if (! class_exists('WpPlugin\\PostTagger')) {
     require_once WP_PLUGIN_ROOT . '/src/PostTagger.php';
 }
 
+if (! class_exists('WpPlugin\\PostCategorizer')) {
+    require_once WP_PLUGIN_ROOT . '/src/PostCategorizer.php';
+}
+
 if (! class_exists('WpPlugin\\AITagOptimizer')) {
     require_once WP_PLUGIN_ROOT . '/src/AITagOptimizer.php';
 }
