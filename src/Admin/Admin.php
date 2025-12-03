@@ -79,8 +79,11 @@ class Admin
             'Settings',
             'Settings',
             'manage_options',
-            'wp-plugin-settings',
-            [$this, 'render_settings_page']
+            'wp-plugin&tab=settings',
+            function () {
+                wp_safe_redirect(admin_url('admin.php?page=wp-plugin&tab=settings'));
+                exit;
+            }
         );
     }
 
