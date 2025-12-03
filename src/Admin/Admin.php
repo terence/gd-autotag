@@ -445,13 +445,22 @@ class Admin
             ? sprintf('Last run %s ago', human_time_diff($last_run, time()))
             : 'Not run yet';
         echo '<p>Automatically run tagging/categorization tasks on a schedule. ' . esc_html($last_run_text) . '.</p>';
+        $referer_path = esc_url_raw($_SERVER['REQUEST_URI'] ?? 'admin.php?page=wp-plugin&tab=settings');
+        $run_now_url = wp_nonce_url(
+            add_query_arg(
+                [
+                    'action' => 'wp_plugin_run_schedule_now',
+                    '_wp_http_referer' => $referer_path,
+                ],
+                admin_url('admin-post.php')
+            ),
+            'wp_plugin_manual_schedule_run'
+        );
         ?>
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top: 10px;">
-            <?php wp_nonce_field('wp_plugin_manual_schedule_run'); ?>
-            <input type="hidden" name="action" value="wp_plugin_run_schedule_now" />
-            <?php submit_button('Run Now', 'secondary', 'wp_plugin_run_schedule_now', false); ?>
+        <p>
+            <a href="<?php echo esc_url($run_now_url); ?>" class="button">Run Now</a>
             <span class="description" style="margin-left: 8px;">Process the current batch immediately using the settings below.</span>
-        </form>
+        </p>
         <?php
     }
 
@@ -1339,6 +1348,10 @@ class Admin
         check_admin_referer('wp_plugin_manual_schedule_run');
 
         $redirect = wp_get_referer();
+        if (empty($redirect) && !empty($_REQUEST['_wp_http_referer'])) {
+            $redirect = esc_url_raw(wp_unslash($_REQUEST['_wp_http_referer']));
+        }
+
         if (empty($redirect) || strpos($redirect, 'admin.php?page=wp-plugin') === false) {
             $redirect = admin_url('admin.php?page=wp-plugin&tab=settings');
         }
