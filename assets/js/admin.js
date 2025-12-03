@@ -228,6 +228,95 @@
             .style('fill', '#333');
     }
 
+    function initAutoSaveToggles() {
+        if (typeof window.fetch !== 'function' || typeof window.FormData === 'undefined') {
+            return;
+        }
+
+        var toggles = document.querySelectorAll('input[type="checkbox"][data-auto-save="1"]');
+        if (!toggles.length) {
+            return;
+        }
+
+        function setStatus(el, state, message) {
+            if (!el) {
+                return;
+            }
+
+            var timeoutId = el.getAttribute('data-timeout-id');
+            if (timeoutId) {
+                window.clearTimeout(parseInt(timeoutId, 10));
+                el.removeAttribute('data-timeout-id');
+            }
+
+            el.textContent = message || '';
+            el.classList.remove('is-saving', 'is-success', 'is-error');
+            if (state) {
+                el.classList.add('is-' + state);
+            }
+
+            if (state === 'success') {
+                var newTimeoutId = window.setTimeout(function () {
+                    el.textContent = '';
+                    el.classList.remove('is-success');
+                    el.removeAttribute('data-timeout-id');
+                }, 2000);
+                el.setAttribute('data-timeout-id', String(newTimeoutId));
+            }
+        }
+
+        toggles.forEach(function (toggle) {
+            toggle.addEventListener('change', function () {
+                var form = toggle.closest('form');
+                if (!form) {
+                    return;
+                }
+
+                var action = form.getAttribute('action') || form.action || window.location.href;
+                var statusTarget = toggle.getAttribute('data-auto-save-target');
+                var statusEl = statusTarget ? document.getElementById(statusTarget) : null;
+                var requestId = String(Date.now());
+
+                setStatus(statusEl, 'saving', 'Saving...');
+                toggle.dataset.autoSaveRequest = requestId;
+
+                var formData = new FormData(form);
+                var fieldName = toggle.getAttribute('name');
+                if (fieldName) {
+                    formData.delete(fieldName);
+                    formData.append(fieldName, toggle.checked ? '1' : '0');
+                }
+
+                fetch(action, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Request failed');
+                        }
+                        return response.text();
+                    })
+                    .then(function () {
+                        if (toggle.dataset.autoSaveRequest !== requestId) {
+                            return;
+                        }
+                        setStatus(statusEl, 'success', 'Saved');
+                    })
+                    .catch(function () {
+                        if (toggle.dataset.autoSaveRequest !== requestId) {
+                            return;
+                        }
+                        setStatus(statusEl, 'error', 'Save failed');
+                    });
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         renderLineChart({
             containerId: 'wp-plugin-post-timeline',
@@ -240,5 +329,6 @@
         });
 
         renderTopTagsBar();
+        initAutoSaveToggles();
     });
 })();

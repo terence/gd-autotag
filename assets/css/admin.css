@@ -68,6 +68,18 @@
 	color: #666;
 }
 
+.wp-plugin-auto-save-status.is-saving {
+	color: #666;
+}
+
+.wp-plugin-auto-save-status.is-success {
+	color: #1d7a35;
+}
+
+.wp-plugin-auto-save-status.is-error {
+	color: #c0392b;
+}
+
 .wp-plugin-setting-label {
 	display: inline-block;
 	vertical-align: middle;

@@ -518,11 +518,19 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $debug = isset($options['debug_mode']) ? $options['debug_mode'] : false;
+        $status_id = 'wp-plugin-auto-save-debug-mode';
         ?>
+        <input type="hidden" name="wp_plugin_options[debug_mode]" value="0" />
         <label class="wp-plugin-toggle-switch">
-            <input type="checkbox" name="wp_plugin_options[debug_mode]" value="1" <?php checked($debug, true); ?> />
+            <input type="checkbox"
+                   name="wp_plugin_options[debug_mode]"
+                   value="1"
+                   data-auto-save="1"
+                   data-auto-save-target="<?php echo esc_attr($status_id); ?>"
+                   <?php checked($debug, true); ?> />
             <span class="wp-plugin-toggle-slider"></span>
         </label>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <span class="wp-plugin-setting-label">Enable debug mode</span>
         <p class="description">Enable debug logging for troubleshooting.</p>
         <?php
@@ -532,6 +540,7 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $enabled = isset($options['auto_tag_enabled']) ? $options['auto_tag_enabled'] : false;
+        $status_id = 'wp-plugin-auto-save-auto-tag';
         ?>
         <input type="hidden" name="wp_plugin_options[auto_tag_enabled]" value="0" />
         <label class="wp-plugin-toggle-switch">
@@ -539,9 +548,11 @@ class Admin
                    name="wp_plugin_options[auto_tag_enabled]"
                    value="1"
                    data-auto-save="1"
+                   data-auto-save-target="<?php echo esc_attr($status_id); ?>"
                    <?php checked($enabled, true); ?> />
             <span class="wp-plugin-toggle-slider"></span>
         </label>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <span class="wp-plugin-setting-label">Enable automatic tag generation</span>
         <p class="description">
             When enabled, adds the following features:<br>
@@ -556,11 +567,19 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $enabled = isset($options['schedule_enabled']) ? (bool) $options['schedule_enabled'] : false;
+        $status_id = 'wp-plugin-auto-save-schedule';
         ?>
+        <input type="hidden" name="wp_plugin_options[schedule_enabled]" value="0" />
         <label class="wp-plugin-toggle-switch">
-            <input type="checkbox" name="wp_plugin_options[schedule_enabled]" value="1" <?php checked($enabled, true); ?> />
+            <input type="checkbox"
+                   name="wp_plugin_options[schedule_enabled]"
+                   value="1"
+                   data-auto-save="1"
+                   data-auto-save-target="<?php echo esc_attr($status_id); ?>"
+                   <?php checked($enabled, true); ?> />
             <span class="wp-plugin-toggle-slider"></span>
         </label>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <span class="wp-plugin-setting-label">Run GD AutoTag automatically</span>
         <p class="description">When enabled, WordPress cron will execute the tagging/categorization jobs at the frequency you choose.</p>
         <?php
@@ -623,11 +642,19 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $enabled = isset($options['auto_category_enabled']) ? $options['auto_category_enabled'] : false;
+        $status_id = 'wp-plugin-auto-save-auto-category';
         ?>
+        <input type="hidden" name="wp_plugin_options[auto_category_enabled]" value="0" />
         <label class="wp-plugin-toggle-switch">
-            <input type="checkbox" name="wp_plugin_options[auto_category_enabled]" value="1" <?php checked($enabled, true); ?> />
+            <input type="checkbox"
+                   name="wp_plugin_options[auto_category_enabled]"
+                   value="1"
+                   data-auto-save="1"
+                   data-auto-save-target="<?php echo esc_attr($status_id); ?>"
+                   <?php checked($enabled, true); ?> />
             <span class="wp-plugin-toggle-slider"></span>
         </label>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <span class="wp-plugin-setting-label">Enable automatic category suggestions</span>
         <p class="description">
             Adds bulk/row actions and editor tools for assigning categories automatically based on your rules.
@@ -639,11 +666,19 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $enabled = isset($options['auto_category_sync_on_save']) ? $options['auto_category_sync_on_save'] : false;
+        $status_id = 'wp-plugin-auto-save-auto-category-sync';
         ?>
+        <input type="hidden" name="wp_plugin_options[auto_category_sync_on_save]" value="0" />
         <label class="wp-plugin-toggle-switch">
-            <input type="checkbox" name="wp_plugin_options[auto_category_sync_on_save]" value="1" <?php checked($enabled, true); ?> />
+            <input type="checkbox"
+                   name="wp_plugin_options[auto_category_sync_on_save]"
+                   value="1"
+                   data-auto-save="1"
+                   data-auto-save-target="<?php echo esc_attr($status_id); ?>"
+                   <?php checked($enabled, true); ?> />
             <span class="wp-plugin-toggle-slider"></span>
         </label>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <span class="wp-plugin-setting-label">Recalculate categories whenever a post is saved</span>
         <p class="description">Helpful when editors frequently change titles, tags, or content that affect category selection.</p>
         <?php
@@ -725,11 +760,19 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $enabled = isset($options['ai_optimization_enabled']) ? $options['ai_optimization_enabled'] : false;
+        $status_id = 'wp-plugin-auto-save-ai-optimization';
         ?>
+        <input type="hidden" name="wp_plugin_options[ai_optimization_enabled]" value="0" />
         <label class="wp-plugin-toggle-switch">
-            <input type="checkbox" name="wp_plugin_options[ai_optimization_enabled]" value="1" <?php checked($enabled, true); ?> />
+            <input type="checkbox"
+                   name="wp_plugin_options[ai_optimization_enabled]"
+                   value="1"
+                   data-auto-save="1"
+                   data-auto-save-target="<?php echo esc_attr($status_id); ?>"
+                   <?php checked($enabled, true); ?> />
             <span class="wp-plugin-toggle-slider"></span>
         </label>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <span class="wp-plugin-setting-label">Enable AI-powered tag optimization</span>
         <p class="description">
             When enabled, uses AI to refine and optimize generated tags for better relevance and SEO.<br>
