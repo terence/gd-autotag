@@ -446,15 +446,15 @@ class Admin
             : 'Not run yet';
         echo '<p>Automatically run tagging/categorization tasks on a schedule. ' . esc_html($last_run_text) . '.</p>';
         $referer_path = esc_url_raw($_SERVER['REQUEST_URI'] ?? 'admin.php?page=wp-plugin&tab=settings');
-        $run_now_url = wp_nonce_url(
-            add_query_arg(
-                [
-                    'action' => 'wp_plugin_run_schedule_now',
-                    '_wp_http_referer' => $referer_path,
-                ],
-                admin_url('admin-post.php')
-            ),
-            'wp_plugin_manual_schedule_run'
+        $run_now_url = add_query_arg(
+            [
+                'action' => 'wp_plugin_run_schedule_now',
+                '_wp_http_referer' => rawurlencode($referer_path),
+            ],
+            wp_nonce_url(
+                admin_url('admin-post.php'),
+                'wp_plugin_manual_schedule_run'
+            )
         );
         ?>
         <p>
@@ -1349,7 +1349,8 @@ class Admin
 
         $redirect = wp_get_referer();
         if (empty($redirect) && !empty($_REQUEST['_wp_http_referer'])) {
-            $redirect = esc_url_raw(wp_unslash($_REQUEST['_wp_http_referer']));
+            $ref = wp_unslash($_REQUEST['_wp_http_referer']);
+            $redirect = esc_url_raw(rawurldecode($ref));
         }
 
         if (empty($redirect) || strpos($redirect, 'admin.php?page=wp-plugin') === false) {

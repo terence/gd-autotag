@@ -56,7 +56,7 @@ class Scheduler
         $post_ids = get_posts([
             'post_type' => 'post',
             'post_status' => 'publish',
-            'posts_per_page' => $batch_size * 2,
+            'posts_per_page' => $batch_size * 3,
             'orderby' => 'date',
             'order' => 'DESC',
             'fields' => 'ids',
@@ -74,14 +74,16 @@ class Scheduler
         foreach ($post_ids as $post_id) {
             $did_work = false;
 
-            if ($auto_tag_enabled && ! $this->post_has_tags((int) $post_id)) {
-                if ($tagger->generate_tags_for_post((int) $post_id)) {
+            $processedPostId = (int) $post_id;
+
+            if ($auto_tag_enabled && ! $this->post_has_tags($processedPostId)) {
+                if ($tagger->generate_tags_for_post($processedPostId)) {
                     $did_work = true;
                 }
             }
 
-            if ($auto_category_enabled && ! $this->post_has_meaningful_category((int) $post_id)) {
-                if ($categorizer->generate_categories_for_post((int) $post_id)) {
+            if ($auto_category_enabled && ! $this->post_has_meaningful_category($processedPostId)) {
+                if ($categorizer->generate_categories_for_post($processedPostId)) {
                     $did_work = true;
                 }
             }
