@@ -15,6 +15,7 @@ class Admin
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_action('admin_menu', [$this, 'add_admin_menu']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_post_wp_plugin_run_schedule_now', [$this, 'handle_manual_schedule_run']);
         add_filter('plugin_action_links_' . plugin_basename($this->file), [$this, 'add_action_links']);
     }
 
@@ -444,6 +445,14 @@ class Admin
             ? sprintf('Last run %s ago', human_time_diff($last_run, time()))
             : 'Not run yet';
         echo '<p>Automatically run tagging/categorization tasks on a schedule. ' . esc_html($last_run_text) . '.</p>';
+        ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top: 10px;">
+            <?php wp_nonce_field('wp_plugin_manual_schedule_run'); ?>
+            <input type="hidden" name="action" value="wp_plugin_run_schedule_now" />
+            <?php submit_button('Run Now', 'secondary', 'wp_plugin_run_schedule_now', false); ?>
+            <span class="description" style="margin-left: 8px;">Process the current batch immediately using the settings below.</span>
+        </form>
+        <?php
     }
 
     public function render_advanced_section(array $section = []): void
@@ -768,9 +777,20 @@ class Admin
             $manualCheckPerformed = true;
         }
 
+        $scheduleRunStatus = isset($_GET['wp_plugin_schedule_run']) ? sanitize_text_field($_GET['wp_plugin_schedule_run']) : '';
+
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+            <?php if ($scheduleRunStatus === 'success'): ?>
+                <div class="notice notice-success is-dismissible">
+                    <p>✓ Scheduled tagging/categorization job completed successfully.</p>
+                </div>
+            <?php elseif ($scheduleRunStatus === 'error'): ?>
+                <div class="notice notice-error is-dismissible">
+                    <p>Unable to run the scheduled job. Please check logs and try again.</p>
+                </div>
+            <?php endif; ?>
             <h2 class="nav-tab-wrapper">
                 <a href="?page=wp-plugin&tab=dashboard" class="nav-tab <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'dashboard') ? 'nav-tab-active' : ''; ?>">Dashboard</a>
                 <a href="?page=wp-plugin&tab=settings" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'settings') ? 'nav-tab-active' : ''; ?>">Settings</a>
@@ -1308,5 +1328,31 @@ class Admin
             'message' => $error_message,
             'data' => [],
         ];
+    }
+
+    public function handle_manual_schedule_run(): void
+    {
+        if (!current_user_can('manage_options')) {
+            wp_die('You do not have permission to run this task.');
+        }
+
+        check_admin_referer('wp_plugin_manual_schedule_run');
+
+        $redirect = wp_get_referer();
+        if (empty($redirect) || strpos($redirect, 'admin.php?page=wp-plugin') === false) {
+            $redirect = admin_url('admin.php?page=wp-plugin&tab=settings');
+        }
+
+        try {
+            $scheduler = new \WpPlugin\Scheduler();
+            $scheduler->run_scheduled_tasks();
+            $redirect = add_query_arg('wp_plugin_schedule_run', 'success', $redirect);
+        } catch (\Throwable $e) {
+            error_log('GD AutoTag manual schedule run failed: ' . $e->getMessage());
+            $redirect = add_query_arg('wp_plugin_schedule_run', 'error', $redirect);
+        }
+
+        wp_safe_redirect($redirect);
+        exit;
     }
 }
