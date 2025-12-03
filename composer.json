@@ -1,6 +1,6 @@
 {
-    "name": "yourname/wp-plugin",
-    "description": "wp_plugin - WordPress plugin scaffold",
+    "name": "yourname/gd-autotag",
+    "description": "gd_autotag - WordPress plugin scaffold",
     "type": "wordpress-plugin",
     "require": {
         "php": ">=8.0",

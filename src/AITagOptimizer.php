@@ -7,7 +7,7 @@ class AITagOptimizer
 
     public function __construct()
     {
-        $this->options = get_option('wp_plugin_options', []);
+        $this->options = get_option('gd_autotag_options', []);
     }
 
     /**
@@ -81,7 +81,7 @@ class AITagOptimizer
                 'Authorization' => 'Bearer ' . $api_key,
             ],
             'body' => json_encode([
-                'model' => apply_filters('wp_plugin_openai_model', 'gpt-3.5-turbo'),
+                'model' => apply_filters('gd_autotag_openai_model', 'gpt-3.5-turbo'),
                 'messages' => [
                     [
                         'role' => 'system',
@@ -128,7 +128,7 @@ class AITagOptimizer
                 'anthropic-version' => '2023-06-01',
             ],
             'body' => json_encode([
-                'model' => apply_filters('wp_plugin_anthropic_model', 'claude-3-haiku-20240307'),
+                'model' => apply_filters('gd_autotag_anthropic_model', 'claude-3-haiku-20240307'),
                 'max_tokens' => 150,
                 'messages' => [
                     [
@@ -162,7 +162,7 @@ class AITagOptimizer
 
         $prompt = $this->build_optimization_prompt($tags, $content, $title, $max_tags);
 
-        $model = apply_filters('wp_plugin_google_model', 'gemini-pro');
+        $model = apply_filters('gd_autotag_google_model', 'gemini-pro');
         $url = "https://generativelanguage.googleapis.com/v1/models/{$model}:generateContent?key={$api_key}";
 
         $response = wp_remote_post($url, [
@@ -203,7 +203,7 @@ class AITagOptimizer
      */
     private function optimize_with_custom(array $tags, string $content, string $title): array
     {
-        $endpoint = apply_filters('wp_plugin_custom_ai_endpoint', '');
+        $endpoint = apply_filters('gd_autotag_custom_ai_endpoint', '');
         
         if (empty($endpoint)) {
             throw new \Exception('Custom AI endpoint not configured');
@@ -216,11 +216,11 @@ class AITagOptimizer
 
         $response = wp_remote_post($endpoint, [
             'timeout' => 30,
-            'headers' => apply_filters('wp_plugin_custom_ai_headers', [
+            'headers' => apply_filters('gd_autotag_custom_ai_headers', [
                 'Content-Type' => 'application/json',
                 'Authorization' => 'Bearer ' . $api_key,
             ]),
-            'body' => apply_filters('wp_plugin_custom_ai_body', json_encode([
+            'body' => apply_filters('gd_autotag_custom_ai_body', json_encode([
                 'prompt' => $prompt,
                 'tags' => $tags,
                 'title' => $title,
@@ -233,7 +233,7 @@ class AITagOptimizer
         }
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
-        $tags_text = apply_filters('wp_plugin_custom_ai_parse_response', $body['tags'] ?? '', $body);
+        $tags_text = apply_filters('gd_autotag_custom_ai_parse_response', $body['tags'] ?? '', $body);
 
         return $this->parse_ai_tags($tags_text);
     }

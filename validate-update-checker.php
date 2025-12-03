@@ -53,7 +53,7 @@ if ($foundVersion) {
 }
 
 // Validate plugin file structure
-$pluginFile = __DIR__ . '/wp-plugin.php';
+$pluginFile = __DIR__ . '/gd-autotag.php';
 if (file_exists($pluginFile)) {
     echo "✓ Plugin main file exists: $pluginFile\n";
     
@@ -68,10 +68,10 @@ if (file_exists($pluginFile)) {
     }
     
     // Check for constants
-    if (strpos($content, "define('WP_PLUGIN_VERSION'") !== false) {
-        echo "✓ WP_PLUGIN_VERSION constant defined\n";
+    if (strpos($content, "define('GD_AUTOTAG_VERSION'") !== false) {
+        echo "✓ GD_AUTOTAG_VERSION constant defined\n";
     } else {
-        echo "✗ WP_PLUGIN_VERSION constant missing\n";
+        echo "✗ GD_AUTOTAG_VERSION constant missing\n";
     }
     
     // Check for submodule loader

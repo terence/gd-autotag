@@ -11,17 +11,17 @@ class PostCategorizer
         add_filter('bulk_actions-edit-post', [$this, 'add_bulk_action']);
         add_filter('handle_bulk_actions-edit-post', [$this, 'handle_bulk_action'], 10, 3);
         add_filter('post_row_actions', [$this, 'add_row_action'], 10, 2);
-        add_action('admin_action_wp_plugin_auto_categorize_post', [$this, 'handle_single_auto_categorization']);
+        add_action('admin_action_gd_autotag_auto_categorize_post', [$this, 'handle_single_auto_categorization']);
         add_action('admin_notices', [$this, 'admin_notices']);
         add_action('add_meta_boxes', [$this, 'add_meta_box']);
-        add_action('wp_ajax_wp_plugin_generate_categories', [$this, 'ajax_generate_categories']);
+        add_action('wp_ajax_gd_autotag_generate_categories', [$this, 'ajax_generate_categories']);
         add_action('save_post_post', [$this, 'maybe_sync_on_save'], 20, 3);
     }
 
     public function add_bulk_action($bulk_actions): array
     {
         if ($this->is_enabled()) {
-            $bulk_actions['wp_plugin_auto_categorize'] = __('Auto Categorize', 'wp-plugin');
+            $bulk_actions['gd_autotag_auto_categorize'] = __('Auto Categorize', 'gd-autotag');
         }
 
         return $bulk_actions;
@@ -29,7 +29,7 @@ class PostCategorizer
 
     public function handle_bulk_action($redirect_to, $action, $post_ids)
     {
-        if ($action !== 'wp_plugin_auto_categorize') {
+        if ($action !== 'gd_autotag_auto_categorize') {
             return $redirect_to;
         }
 
@@ -40,7 +40,7 @@ class PostCategorizer
             }
         }
 
-        return add_query_arg('wp_plugin_auto_categorized', $processed, $redirect_to);
+        return add_query_arg('gd_autotag_auto_categorized', $processed, $redirect_to);
     }
 
     public function add_row_action($actions, $post)
@@ -50,15 +50,15 @@ class PostCategorizer
         }
 
         $url = wp_nonce_url(
-            admin_url('admin.php?action=wp_plugin_auto_categorize_post&post=' . $post->ID),
-            'wp_plugin_auto_categorize_post_' . $post->ID
+            admin_url('admin.php?action=gd_autotag_auto_categorize_post&post=' . $post->ID),
+            'gd_autotag_auto_categorize_post_' . $post->ID
         );
 
-        $actions['wp_plugin_auto_categorize'] = sprintf(
+        $actions['gd_autotag_auto_categorize'] = sprintf(
             '<a href="%s" title="%s">%s</a>',
             esc_url($url),
-            esc_attr__('Automatically assign categories based on tags/content', 'wp-plugin'),
-            esc_html__('Auto Categorize', 'wp-plugin')
+            esc_attr__('Automatically assign categories based on tags/content', 'gd-autotag'),
+            esc_html__('Auto Categorize', 'gd-autotag')
         );
 
         return $actions;
@@ -67,26 +67,26 @@ class PostCategorizer
     public function handle_single_auto_categorization(): void
     {
         if (!$this->is_enabled() || !isset($_GET['post'])) {
-            wp_die(__('Auto categorization is disabled or post missing.', 'wp-plugin'));
+            wp_die(__('Auto categorization is disabled or post missing.', 'gd-autotag'));
         }
 
         $post_id = intval($_GET['post']);
 
-        if (!wp_verify_nonce($_GET['_wpnonce'], 'wp_plugin_auto_categorize_post_' . $post_id)) {
-            wp_die(__('Security check failed.', 'wp-plugin'));
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'gd_autotag_auto_categorize_post_' . $post_id)) {
+            wp_die(__('Security check failed.', 'gd-autotag'));
         }
 
         if (!current_user_can('edit_post', $post_id)) {
-            wp_die(__('You do not have permission to edit this post.', 'wp-plugin'));
+            wp_die(__('You do not have permission to edit this post.', 'gd-autotag'));
         }
 
         $success = $this->generate_categories_for_post($post_id);
         $redirect = admin_url('edit.php?post_type=post');
 
         if ($success) {
-            $redirect = add_query_arg('wp_plugin_auto_categorized_single', '1', $redirect);
+            $redirect = add_query_arg('gd_autotag_auto_categorized_single', '1', $redirect);
         } else {
-            $redirect = add_query_arg('wp_plugin_auto_categorized_failed', '1', $redirect);
+            $redirect = add_query_arg('gd_autotag_auto_categorized_failed', '1', $redirect);
         }
 
         wp_safe_redirect($redirect);
@@ -95,20 +95,20 @@ class PostCategorizer
 
     public function admin_notices(): void
     {
-        if (!empty($_REQUEST['wp_plugin_auto_categorized'])) {
-            $count = intval($_REQUEST['wp_plugin_auto_categorized']);
+        if (!empty($_REQUEST['gd_autotag_auto_categorized'])) {
+            $count = intval($_REQUEST['gd_autotag_auto_categorized']);
             printf(
                 '<div class="notice notice-success is-dismissible"><p>%s</p></div>',
-                esc_html(sprintf(__('Auto-categorized %d post(s).', 'wp-plugin'), $count))
+                esc_html(sprintf(__('Auto-categorized %d post(s).', 'gd-autotag'), $count))
             );
         }
 
-        if (!empty($_REQUEST['wp_plugin_auto_categorized_single'])) {
-            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Categories updated for the post.', 'wp-plugin') . '</p></div>';
+        if (!empty($_REQUEST['gd_autotag_auto_categorized_single'])) {
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Categories updated for the post.', 'gd-autotag') . '</p></div>';
         }
 
-        if (!empty($_REQUEST['wp_plugin_auto_categorized_failed'])) {
-            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('No categories could be assigned.', 'wp-plugin') . '</p></div>';
+        if (!empty($_REQUEST['gd_autotag_auto_categorized_failed'])) {
+            echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__('No categories could be assigned.', 'gd-autotag') . '</p></div>';
         }
     }
 
@@ -119,8 +119,8 @@ class PostCategorizer
         }
 
         add_meta_box(
-            'wp_plugin_auto_categorizer',
-            __('Auto Categories', 'wp-plugin'),
+            'gd_autotag_auto_categorizer',
+            __('Auto Categories', 'gd-autotag'),
             [$this, 'render_meta_box'],
             'post',
             'side',
@@ -131,21 +131,21 @@ class PostCategorizer
     public function render_meta_box($post): void
     {
         ?>
-        <div class="wp-plugin-auto-categorizer">
-            <p><?php esc_html_e('Suggest categories based on existing tags and content signals.', 'wp-plugin'); ?></p>
-            <button type="button" class="button button-secondary wp-plugin-generate-categories-btn" data-post-id="<?php echo esc_attr($post->ID); ?>">
-                <?php esc_html_e('Suggest Categories', 'wp-plugin'); ?>
+        <div class="gd-autotag-auto-categorizer">
+            <p><?php esc_html_e('Suggest categories based on existing tags and content signals.', 'gd-autotag'); ?></p>
+            <button type="button" class="button button-secondary gd-autotag-generate-categories-btn" data-post-id="<?php echo esc_attr($post->ID); ?>">
+                <?php esc_html_e('Suggest Categories', 'gd-autotag'); ?>
             </button>
             <span class="spinner" style="float: none; margin: 0 10px;"></span>
-            <div class="wp-plugin-categories-result" style="margin-top: 10px;"></div>
+            <div class="gd-autotag-categories-result" style="margin-top: 10px;"></div>
         </div>
         <script>
         jQuery(document).ready(function($) {
-            $('.wp-plugin-generate-categories-btn').on('click', function() {
+            $('.gd-autotag-generate-categories-btn').on('click', function() {
                 var btn = $(this);
                 var postId = btn.data('post-id');
                 var spinner = btn.siblings('.spinner');
-                var result = btn.closest('.wp-plugin-auto-categorizer').find('.wp-plugin-categories-result');
+                var result = btn.closest('.gd-autotag-auto-categorizer').find('.gd-autotag-categories-result');
 
                 btn.prop('disabled', true);
                 spinner.addClass('is-active');
@@ -155,9 +155,9 @@ class PostCategorizer
                     url: ajaxurl,
                     method: 'POST',
                     data: {
-                        action: 'wp_plugin_generate_categories',
+                        action: 'gd_autotag_generate_categories',
                         post_id: postId,
-                        nonce: '<?php echo wp_create_nonce('wp_plugin_generate_categories'); ?>'
+                        nonce: '<?php echo wp_create_nonce('gd_autotag_generate_categories'); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -167,7 +167,7 @@ class PostCategorizer
                         }
                     },
                     error: function() {
-                        result.html('<span style="color: red;">' + '<?php echo esc_js(__('Error assigning categories.', 'wp-plugin')); ?>' + '</span>');
+                        result.html('<span style="color: red;">' + '<?php echo esc_js(__('Error assigning categories.', 'gd-autotag')); ?>' + '</span>');
                     },
                     complete: function() {
                         btn.prop('disabled', false);
@@ -182,22 +182,22 @@ class PostCategorizer
 
     public function ajax_generate_categories(): void
     {
-        check_ajax_referer('wp_plugin_generate_categories', 'nonce');
+        check_ajax_referer('gd_autotag_generate_categories', 'nonce');
 
         if (!current_user_can('edit_posts')) {
-            wp_send_json_error(['message' => __('Insufficient permissions.', 'wp-plugin')]);
+            wp_send_json_error(['message' => __('Insufficient permissions.', 'gd-autotag')]);
         }
 
         $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
         if (!$post_id) {
-            wp_send_json_error(['message' => __('Invalid post ID.', 'wp-plugin')]);
+            wp_send_json_error(['message' => __('Invalid post ID.', 'gd-autotag')]);
         }
 
         if ($this->generate_categories_for_post($post_id)) {
-            wp_send_json_success(['message' => __('Categories updated.', 'wp-plugin')]);
+            wp_send_json_success(['message' => __('Categories updated.', 'gd-autotag')]);
         }
 
-        wp_send_json_error(['message' => __('No categories detected for this post.', 'wp-plugin')]);
+        wp_send_json_error(['message' => __('No categories detected for this post.', 'gd-autotag')]);
     }
 
     public function maybe_sync_on_save($post_id, $post, $update): void
@@ -210,7 +210,7 @@ class PostCategorizer
             return;
         }
 
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         if (empty($options['auto_category_sync_on_save'])) {
             return;
         }
@@ -220,7 +220,7 @@ class PostCategorizer
 
     private function is_enabled(): bool
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         return !empty($options['auto_category_enabled']);
     }
 
@@ -232,7 +232,7 @@ class PostCategorizer
             return false;
         }
 
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $limit = isset($options['auto_category_max_categories']) ? max(1, (int) $options['auto_category_max_categories']) : 3;
         $strategy = $options['auto_category_strategy'] ?? 'tag-match';
 

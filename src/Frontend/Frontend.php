@@ -18,7 +18,7 @@ class Frontend
     public function enqueue_public_assets(): void
     {
         $suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
-        wp_enqueue_style('wp-plugin-public', plugin_dir_url($this->file) . 'assets/css/public' . $suffix . '.css', [], WP_PLUGIN_VERSION);
-        wp_enqueue_script('wp-plugin-public', plugin_dir_url($this->file) . 'assets/js/public.js', [], WP_PLUGIN_VERSION, true);
+        wp_enqueue_style('gd-autotag-public', plugin_dir_url($this->file) . 'assets/css/public' . $suffix . '.css', [], GD_AUTOTAG_VERSION);
+        wp_enqueue_script('gd-autotag-public', plugin_dir_url($this->file) . 'assets/js/public.js', [], GD_AUTOTAG_VERSION, true);
     }
 }

@@ -23,7 +23,7 @@ Navigate to **Settings** tab to configure:
 - **Debug Mode**: Enable debug logging for troubleshooting
 - **Tag Exclusion List**: Define words that should never be used as tags (one per line)
 
-All settings are stored in the WordPress options table under `wp_plugin_options`.
+All settings are stored in the WordPress options table under `gd_autotag_options`.
 
 #### API Key Configuration
 
@@ -50,7 +50,7 @@ my-api-key-1234567890abcdef_xyz
 The plugin automatically verifies API keys against an external license server when saving settings.
 
 **License Server Integration:**
-- Endpoint URL can be configured via filter: `wp_plugin_license_server_url`
+- Endpoint URL can be configured via filter: `gd_autotag_license_server_url`
 - Default endpoint: `https://api.example.com/v1/verify-license`
 - Verification includes site URL and plugin version
 - Timeout: 15 seconds
@@ -72,7 +72,7 @@ The plugin automatically verifies API keys against an external license server wh
 Add to your theme's `functions.php` or custom plugin:
 
 ```php
-add_filter('wp_plugin_license_server_url', function($url) {
+add_filter('gd_autotag_license_server_url', function($url) {
     return 'https://yourdomain.com/api/verify-license';
 });
 ```
@@ -108,7 +108,7 @@ Response (Failure):
 ```
 
 **Storage:**
-- Option name: `wp_plugin_options`
+- Option name: `gd_autotag_options`
 - Field key: `api_key`
 - License status: `api_key_license_status`
 - License data: `api_key_license_data`
@@ -162,12 +162,12 @@ Enable AI integration to enhance tag quality with semantic understanding and SEO
 For custom AI implementations, configure the endpoint via filter:
 
 ```php
-add_filter('wp_plugin_custom_ai_endpoint', function($endpoint) {
+add_filter('gd_autotag_custom_ai_endpoint', function($endpoint) {
     return 'https://your-ai-service.com/api/optimize-tags';
 });
 
 // Optionally customize headers
-add_filter('wp_plugin_custom_ai_headers', function($headers) {
+add_filter('gd_autotag_custom_ai_headers', function($headers) {
     return [
         'Content-Type' => 'application/json',
         'X-API-Key' => 'your-api-key',
@@ -175,7 +175,7 @@ add_filter('wp_plugin_custom_ai_headers', function($headers) {
 });
 
 // Customize request body format
-add_filter('wp_plugin_custom_ai_body', function($body, $tags, $title, $content) {
+add_filter('gd_autotag_custom_ai_body', function($body, $tags, $title, $content) {
     return json_encode([
         'tags' => $tags,
         'title' => $title,
@@ -185,7 +185,7 @@ add_filter('wp_plugin_custom_ai_body', function($body, $tags, $title, $content) 
 }, 10, 4);
 
 // Parse custom response format
-add_filter('wp_plugin_custom_ai_parse_response', function($tags, $response) {
+add_filter('gd_autotag_custom_ai_parse_response', function($tags, $response) {
     return $response['optimized_tags'] ?? $tags;
 }, 10, 2);
 ```
@@ -196,31 +196,31 @@ Override default AI models using filters:
 
 ```php
 // Use GPT-4 instead of GPT-3.5
-add_filter('wp_plugin_openai_model', function($model) {
+add_filter('gd_autotag_openai_model', function($model) {
     return 'gpt-4';
 });
 
 // Use Claude 3 Sonnet instead of Haiku
-add_filter('wp_plugin_anthropic_model', function($model) {
+add_filter('gd_autotag_anthropic_model', function($model) {
     return 'claude-3-sonnet-20240229';
 });
 
 // Use specific Gemini model
-add_filter('wp_plugin_google_model', function($model) {
+add_filter('gd_autotag_google_model', function($model) {
     return 'gemini-1.5-pro';
 });
 ```
 
 **Storage:**
-- AI optimization enabled: `wp_plugin_options['ai_optimization_enabled']`
-- AI provider: `wp_plugin_options['ai_provider']`
-- AI API key: `wp_plugin_options['ai_api_key']` (stored securely)
+- AI optimization enabled: `gd_autotag_options['ai_optimization_enabled']`
+- AI provider: `gd_autotag_options['ai_provider']`
+- AI API key: `gd_autotag_options['ai_api_key']` (stored securely)
 
 #### Tag Exclusion List:
 Located in **Auto Tagging Settings**, this feature allows you to specify words that should never be used as tags. The system automatically excludes common words like "the", "and", "or", etc., plus any custom words you add.
 
 **Storage Location:**
-- Option name: `wp_plugin_options`
+- Option name: `gd_autotag_options`
 - Field key: `tag_exclusion_list`
 - Format: Plain text, one word per line
 - Database: WordPress `wp_options` table

@@ -1,3 +1,3 @@
 (function () {
-    // Public JS for wp_plugin
+    // Public JS for gd_autotag
 })();

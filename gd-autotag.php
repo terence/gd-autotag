@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name: GD AutoTag
- * Plugin URI:  https://github.com/terence/wp-plugin
+ * Plugin URI:  https://github.com/terence/gd-autotag
  * Description: Plugin for Content automation using AI.
  * Version:     0.1.5
  * Author:      Trevor Rock
  * Author URI:  https://github.com/terence/
- * Text Domain: wp-plugin
+ * Text Domain: gd-autotag
  * Domain Path: /languages
  * License:     MIT
  */
@@ -18,20 +18,20 @@ if (! defined('WPINC')) {
 }
 
 // Plugin constants (guarded to avoid redefinition in MU/loader contexts)
-if (! defined('WP_PLUGIN_VERSION')) {
-    define('WP_PLUGIN_VERSION', '0.1.5');
+if (! defined('GD_AUTOTAG_VERSION')) {
+    define('GD_AUTOTAG_VERSION', '0.1.5');
 }
 
-if (! defined('WP_PLUGIN_DIR')) {
-    define('WP_PLUGIN_DIR', plugin_dir_path(__FILE__));
+if (! defined('GD_AUTOTAG_DIR')) {
+    define('GD_AUTOTAG_DIR', plugin_dir_path(__FILE__));
 }
 
-if (! defined('WP_PLUGIN_FILE')) {
-    define('WP_PLUGIN_FILE', __FILE__);
+if (! defined('GD_AUTOTAG_FILE')) {
+    define('GD_AUTOTAG_FILE', __FILE__);
 }
 
-if (! defined('WP_PLUGIN_ROOT')) {
-    define('WP_PLUGIN_ROOT', __DIR__);
+if (! defined('GD_AUTOTAG_ROOT')) {
+    define('GD_AUTOTAG_ROOT', __DIR__);
 }
 
 // Load composer autoloader when present
@@ -41,32 +41,32 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 
 // Load the plugin bootstrap
 if (! class_exists('WpPlugin\\Plugin')) {
-    require_once WP_PLUGIN_ROOT . '/src/Plugin.php';
+    require_once GD_AUTOTAG_ROOT . '/src/Plugin.php';
 }
 
 // Fallback includes when Composer autoloader isn't available (e.g., zipped deployments)
 if (! class_exists('WpPlugin\\Admin\\Admin')) {
-    require_once WP_PLUGIN_ROOT . '/src/Admin/Admin.php';
+    require_once GD_AUTOTAG_ROOT . '/src/Admin/Admin.php';
 }
 
 if (! class_exists('WpPlugin\\Frontend\\Frontend')) {
-    require_once WP_PLUGIN_ROOT . '/src/Frontend/Frontend.php';
+    require_once GD_AUTOTAG_ROOT . '/src/Frontend/Frontend.php';
 }
 
 if (! class_exists('WpPlugin\\PostTagger')) {
-    require_once WP_PLUGIN_ROOT . '/src/PostTagger.php';
+    require_once GD_AUTOTAG_ROOT . '/src/PostTagger.php';
 }
 
 if (! class_exists('WpPlugin\\PostCategorizer')) {
-    require_once WP_PLUGIN_ROOT . '/src/PostCategorizer.php';
+    require_once GD_AUTOTAG_ROOT . '/src/PostCategorizer.php';
 }
 
 if (! class_exists('WpPlugin\\Scheduler')) {
-    require_once WP_PLUGIN_ROOT . '/src/Scheduler.php';
+    require_once GD_AUTOTAG_ROOT . '/src/Scheduler.php';
 }
 
 if (! class_exists('WpPlugin\\AITagOptimizer')) {
-    require_once WP_PLUGIN_ROOT . '/src/AITagOptimizer.php';
+    require_once GD_AUTOTAG_ROOT . '/src/AITagOptimizer.php';
 }
 
 // Load plugin-update-checker via submodule if not already available through Composer
@@ -82,10 +82,10 @@ if (! class_exists('YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory')) {
 if (class_exists('YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory')) {
     try {
         $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-            // Replace with your public repo URL, e.g. https://github.com/owner/wp-plugin
-            'https://github.com/terence/wp-plugin',
-            WP_PLUGIN_FILE,
-            'wp-plugin'
+            // Replace with your public repo URL, e.g. https://github.com/owner/gd-autotag
+            'https://github.com/terence/gd-autotag',
+            GD_AUTOTAG_FILE,
+            'gd-autotag'
         );
         
         // Enable GitHub Releases - tells the checker to look for release assets (ZIP files)
@@ -100,7 +100,7 @@ if (class_exists('YahnisElsts\\PluginUpdateChecker\\v5\\PucFactory')) {
         // $updateChecker->setAuthentication('your_github_token_here');
     } catch (Exception $e) {
         // Log error but don't break plugin initialization
-        error_log('wp-plugin update checker failed: ' . $e->getMessage());
+        error_log('gd-autotag update checker failed: ' . $e->getMessage());
     }
 }
 
@@ -111,10 +111,10 @@ register_deactivation_hook(__FILE__, ['WpPlugin\\Plugin', 'deactivate']);
 /**
  * Start plugin
  */
-function wp_plugin_run(): void
+function gd_autotag_run(): void
 {
-    $plugin = new WpPlugin\Plugin(WP_PLUGIN_FILE);
+    $plugin = new WpPlugin\Plugin(GD_AUTOTAG_FILE);
     $plugin->run();
 }
 
-wp_plugin_run();
+gd_autotag_run();

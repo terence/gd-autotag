@@ -7,7 +7,7 @@ class PluginTest extends TestCase
 {
     public function test_construct()
     {
-        $plugin = new Plugin(__DIR__ . '/../wp-plugin.php');
+        $plugin = new Plugin(__DIR__ . '/../gd-autotag.php');
         $this->assertInstanceOf(Plugin::class, $plugin);
     }
 }

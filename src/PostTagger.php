@@ -11,7 +11,7 @@ class PostTagger
         
         // Add row action to individual posts
         add_filter('post_row_actions', [$this, 'add_row_action'], 10, 2);
-        add_action('admin_action_wp_plugin_generate_single_tag', [$this, 'handle_single_tag_generation']);
+        add_action('admin_action_gd_autotag_generate_single_tag', [$this, 'handle_single_tag_generation']);
         
         // Add admin notice
         add_action('admin_notices', [$this, 'bulk_action_admin_notice']);
@@ -20,16 +20,16 @@ class PostTagger
         add_action('add_meta_boxes', [$this, 'add_meta_box']);
         
         // Add AJAX handler for generating tags
-        add_action('wp_ajax_wp_plugin_generate_tags', [$this, 'ajax_generate_tags']);
+        add_action('wp_ajax_gd_autotag_generate_tags', [$this, 'ajax_generate_tags']);
     }
 
     public function add_bulk_action($bulk_actions): array
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['auto_tag_enabled']) ? $options['auto_tag_enabled'] : false;
         
         if ($enabled) {
-            $bulk_actions['wp_plugin_generate_tags'] = 'Generate Tags';
+            $bulk_actions['gd_autotag_generate_tags'] = 'Generate Tags';
         }
         
         return $bulk_actions;
@@ -37,7 +37,7 @@ class PostTagger
 
     public function handle_bulk_action($redirect_to, $action, $post_ids)
     {
-        if ($action !== 'wp_plugin_generate_tags') {
+        if ($action !== 'gd_autotag_generate_tags') {
             return $redirect_to;
         }
 
@@ -48,27 +48,27 @@ class PostTagger
             }
         }
 
-        $redirect_to = add_query_arg('wp_plugin_tags_generated', $processed, $redirect_to);
+        $redirect_to = add_query_arg('gd_autotag_tags_generated', $processed, $redirect_to);
         return $redirect_to;
     }
 
     public function add_row_action($actions, $post)
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['auto_tag_enabled']) ? $options['auto_tag_enabled'] : false;
         
         // Only add for published posts and when feature is enabled
         if ($enabled && $post->post_status === 'publish' && $post->post_type === 'post') {
             $url = wp_nonce_url(
-                admin_url('admin.php?action=wp_plugin_generate_single_tag&post=' . $post->ID),
-                'wp_plugin_generate_single_tag_' . $post->ID
+                admin_url('admin.php?action=gd_autotag_generate_single_tag&post=' . $post->ID),
+                'gd_autotag_generate_single_tag_' . $post->ID
             );
             
-            $actions['wp_plugin_generate_tags'] = sprintf(
+            $actions['gd_autotag_generate_tags'] = sprintf(
                 '<a href="%s" title="%s">%s</a>',
                 esc_url($url),
-                esc_attr__('Generate tags for this post', 'wp-plugin'),
-                esc_html__('Generate Tags', 'wp-plugin')
+                esc_attr__('Generate tags for this post', 'gd-autotag'),
+                esc_html__('Generate Tags', 'gd-autotag')
             );
         }
         
@@ -85,7 +85,7 @@ class PostTagger
         $post_id = intval($_GET['post']);
 
         // Verify nonce
-        if (!wp_verify_nonce($_GET['_wpnonce'], 'wp_plugin_generate_single_tag_' . $post_id)) {
+        if (!wp_verify_nonce($_GET['_wpnonce'], 'gd_autotag_generate_single_tag_' . $post_id)) {
             wp_die('Security check failed.');
         }
 
@@ -101,9 +101,9 @@ class PostTagger
         $redirect_url = admin_url('edit.php?post_type=post');
         
         if ($success) {
-            $redirect_url = add_query_arg('wp_plugin_single_tag_generated', '1', $redirect_url);
+            $redirect_url = add_query_arg('gd_autotag_single_tag_generated', '1', $redirect_url);
         } else {
-            $redirect_url = add_query_arg('wp_plugin_single_tag_failed', '1', $redirect_url);
+            $redirect_url = add_query_arg('gd_autotag_single_tag_failed', '1', $redirect_url);
         }
 
         wp_redirect($redirect_url);
@@ -112,32 +112,32 @@ class PostTagger
 
     public function bulk_action_admin_notice(): void
     {
-        if (!empty($_REQUEST['wp_plugin_tags_generated'])) {
-            $count = intval($_REQUEST['wp_plugin_tags_generated']);
+        if (!empty($_REQUEST['gd_autotag_tags_generated'])) {
+            $count = intval($_REQUEST['gd_autotag_tags_generated']);
             printf(
                 '<div class="notice notice-success is-dismissible"><p>Generated tags for %d post(s).</p></div>',
                 $count
             );
         }
         
-        if (!empty($_REQUEST['wp_plugin_single_tag_generated'])) {
+        if (!empty($_REQUEST['gd_autotag_single_tag_generated'])) {
             echo '<div class="notice notice-success is-dismissible"><p>Tags generated successfully for the post.</p></div>';
         }
         
-        if (!empty($_REQUEST['wp_plugin_single_tag_failed'])) {
+        if (!empty($_REQUEST['gd_autotag_single_tag_failed'])) {
             echo '<div class="notice notice-error is-dismissible"><p>Failed to generate tags for the post.</p></div>';
         }
     }
 
     public function add_meta_box(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['auto_tag_enabled']) ? $options['auto_tag_enabled'] : false;
         
         // Only add meta box if feature is enabled
         if ($enabled) {
             add_meta_box(
-                'wp_plugin_tag_generator',
+                'gd_autotag_tag_generator',
                 'Auto Tag Generator',
                 [$this, 'render_meta_box'],
                 'post',
@@ -150,21 +150,21 @@ class PostTagger
     public function render_meta_box($post): void
     {
         ?>
-        <div class="wp-plugin-tag-generator">
+        <div class="gd-autotag-tag-generator">
             <p>Automatically generate tags based on post content.</p>
-            <button type="button" class="button button-secondary wp-plugin-generate-tags-btn" data-post-id="<?php echo esc_attr($post->ID); ?>">
+            <button type="button" class="button button-secondary gd-autotag-generate-tags-btn" data-post-id="<?php echo esc_attr($post->ID); ?>">
                 Generate Tags
             </button>
             <span class="spinner" style="float: none; margin: 0 10px;"></span>
-            <div class="wp-plugin-tags-result" style="margin-top: 10px;"></div>
+            <div class="gd-autotag-tags-result" style="margin-top: 10px;"></div>
         </div>
         <script>
         jQuery(document).ready(function($) {
-            $('.wp-plugin-generate-tags-btn').on('click', function() {
+            $('.gd-autotag-generate-tags-btn').on('click', function() {
                 var btn = $(this);
                 var postId = btn.data('post-id');
                 var spinner = btn.siblings('.spinner');
-                var result = $('.wp-plugin-tags-result');
+                var result = $('.gd-autotag-tags-result');
                 
                 btn.prop('disabled', true);
                 spinner.addClass('is-active');
@@ -174,9 +174,9 @@ class PostTagger
                     url: ajaxurl,
                     method: 'POST',
                     data: {
-                        action: 'wp_plugin_generate_tags',
+                        action: 'gd_autotag_generate_tags',
                         post_id: postId,
-                        nonce: '<?php echo wp_create_nonce('wp_plugin_generate_tags'); ?>'
+                        nonce: '<?php echo wp_create_nonce('gd_autotag_generate_tags'); ?>'
                     },
                     success: function(response) {
                         if (response.success) {
@@ -205,7 +205,7 @@ class PostTagger
 
     public function ajax_generate_tags(): void
     {
-        check_ajax_referer('wp_plugin_generate_tags', 'nonce');
+        check_ajax_referer('gd_autotag_generate_tags', 'nonce');
         
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(['message' => 'Insufficient permissions']);
@@ -235,7 +235,7 @@ class PostTagger
         }
 
         // Get plugin options
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         
         // Extract potential tags from title and content
         $tags = $this->extract_tags($post);
@@ -260,7 +260,7 @@ class PostTagger
     private function extract_tags($post): array
     {
         // Get plugin options for exclusion list
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $exclusion_list = isset($options['tag_exclusion_list']) ? $options['tag_exclusion_list'] : '';
 
         // Build common words list

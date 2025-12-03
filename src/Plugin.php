@@ -15,7 +15,7 @@ class Plugin
         if (! function_exists('flush_rewrite_rules')) {
             return;
         }
-        // Example: add_option('wp_plugin_options', []);
+        // Example: add_option('gd_autotag_options', []);
     }
 
     public static function deactivate(): void
@@ -38,7 +38,7 @@ class Plugin
 
     public function load_textdomain(): void
     {
-        load_plugin_textdomain('wp-plugin', false, dirname(plugin_basename($this->file)) . '/languages');
+        load_plugin_textdomain('gd-autotag', false, dirname(plugin_basename($this->file)) . '/languages');
     }
 
     public function init_admin(): void

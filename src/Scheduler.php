@@ -3,13 +3,13 @@ namespace WpPlugin;
 
 class Scheduler
 {
-    private const CRON_HOOK = 'wp_plugin_run_scheduled_tasks';
+    private const CRON_HOOK = 'gd_autotag_run_scheduled_tasks';
 
     public function register(): void
     {
         add_action('init', [$this, 'maybe_schedule_event']);
         add_action(self::CRON_HOOK, [$this, 'run_scheduled_tasks']);
-        add_action('update_option_wp_plugin_options', [$this, 'handle_option_update'], 10, 3);
+        add_action('update_option_gd_autotag_options', [$this, 'handle_option_update'], 10, 3);
     }
 
     public function maybe_schedule_event(): void
@@ -26,7 +26,7 @@ class Scheduler
 
     public function handle_option_update($old_value, $new_value, $option_name): void
     {
-        if ($option_name !== 'wp_plugin_options') {
+        if ($option_name !== 'gd_autotag_options') {
             return;
         }
 
@@ -43,7 +43,7 @@ class Scheduler
 
     public function run_scheduled_tasks(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
 
         $batch_size = isset($options['schedule_batch_size']) ? max(1, min(50, (int) $options['schedule_batch_size'])) : 5;
         $auto_tag_enabled = !empty($options['auto_tag_enabled']);
@@ -63,7 +63,7 @@ class Scheduler
         ]);
 
         if (empty($post_ids)) {
-            update_option('wp_plugin_schedule_last_run', time());
+            update_option('gd_autotag_schedule_last_run', time());
             return;
         }
 
@@ -97,19 +97,19 @@ class Scheduler
             }
         }
 
-        update_option('wp_plugin_schedule_last_run', time());
+        update_option('gd_autotag_schedule_last_run', time());
 
         /**
          * Fires after GD AutoTag completes its scheduled cron run.
          *
          * @param int $processed Number of posts updated during this run.
          */
-        do_action('wp_plugin_after_scheduled_run', $processed);
+        do_action('gd_autotag_after_scheduled_run', $processed);
     }
 
     private function is_enabled(?array $options = null): bool
     {
-        $options = $options ?? get_option('wp_plugin_options', []);
+        $options = $options ?? get_option('gd_autotag_options', []);
         return !empty($options['schedule_enabled']);
     }
 
@@ -123,7 +123,7 @@ class Scheduler
 
     private function get_frequency_slug(?array $options = null): string
     {
-        $options = $options ?? get_option('wp_plugin_options', []);
+        $options = $options ?? get_option('gd_autotag_options', []);
         $frequency = $options['schedule_frequency'] ?? 'daily';
         $allowed = ['hourly', 'twicedaily', 'daily'];
         if (! in_array($frequency, $allowed, true)) {
@@ -134,7 +134,7 @@ class Scheduler
 
     private function resolve_start_timestamp(?array $options = null): int
     {
-        $options = $options ?? get_option('wp_plugin_options', []);
+        $options = $options ?? get_option('gd_autotag_options', []);
         $frequency = $this->get_frequency_slug($options);
 
         if ($frequency !== 'daily') {

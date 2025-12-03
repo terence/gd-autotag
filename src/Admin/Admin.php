@@ -15,22 +15,22 @@ class Admin
         add_action('admin_enqueue_scripts', [$this, 'enqueue_admin_assets']);
         add_action('admin_menu', [$this, 'add_admin_menu']);
         add_action('admin_init', [$this, 'register_settings']);
-        add_action('admin_post_wp_plugin_run_schedule_now', [$this, 'handle_manual_schedule_run']);
+        add_action('admin_post_gd_autotag_run_schedule_now', [$this, 'handle_manual_schedule_run']);
         add_filter('plugin_action_links_' . plugin_basename($this->file), [$this, 'add_action_links']);
     }
 
     public function enqueue_admin_assets(): void
     {
         $assets_url = plugin_dir_url($this->file) . 'assets/';
-        wp_enqueue_style('wp-plugin-admin', $assets_url . 'css/admin.css', [], WP_PLUGIN_VERSION);
+        wp_enqueue_style('gd-autotag-admin', $assets_url . 'css/admin.css', [], GD_AUTOTAG_VERSION);
 
         wp_enqueue_script('d3', 'https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js', [], '7.8.5', true);
-        wp_enqueue_script('wp-plugin-admin', $assets_url . 'js/admin.js', ['jquery', 'd3'], WP_PLUGIN_VERSION, true);
+        wp_enqueue_script('gd-autotag-admin', $assets_url . 'js/admin.js', ['jquery', 'd3'], GD_AUTOTAG_VERSION, true);
 
         $current_page = isset($_GET['page']) ? sanitize_key($_GET['page']) : '';
-        if ($current_page === 'wp-plugin') {
+        if ($current_page === 'gd-autotag') {
             $tagStats = $this->get_tag_usage_stats(8);
-            wp_localize_script('wp-plugin-admin', 'wpPluginDashboardData', [
+            wp_localize_script('gd-autotag-admin', 'gdAutotagDashboardData', [
                 'postTimeline' => $this->get_monthly_post_stats(12),
                 'topTags' => $tagStats['top_tags'] ?? [],
             ]);
@@ -39,8 +39,8 @@ class Admin
 
     public function add_action_links($links): array
     {
-        $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin&tab=settings')) . '">Settings</a>';
-        $dashboard_link = '<a href="' . esc_url(admin_url('admin.php?page=wp-plugin')) . '">Dashboard</a>';
+        $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=gd-autotag&tab=settings')) . '">Settings</a>';
+        $dashboard_link = '<a href="' . esc_url(admin_url('admin.php?page=gd-autotag')) . '">Dashboard</a>';
 
         array_unshift($links, $settings_link, $dashboard_link);
         
@@ -60,28 +60,28 @@ class Admin
             'GD AutoTag Dashboard',       // Page title
             'GD AutoTag',       // Menu title
             'manage_options',
-            'wp-plugin',
+            'gd-autotag',
             [$this, 'render_admin_page'],
             $icon_url
         );
 
         add_submenu_page(
-            'wp-plugin',
+            'gd-autotag',
             'Dashboard',
             'Dashboard',
             'manage_options',
-            'wp-plugin',
+            'gd-autotag',
             [$this, 'render_admin_page']
         );
         
         add_submenu_page(
-            'wp-plugin',
+            'gd-autotag',
             'Settings',
             'Settings',
             'manage_options',
-            'wp-plugin&tab=settings',
+            'gd-autotag&tab=settings',
             function () {
-                wp_safe_redirect(admin_url('admin.php?page=wp-plugin&tab=settings'));
+                wp_safe_redirect(admin_url('admin.php?page=gd-autotag&tab=settings'));
                 exit;
             }
         );
@@ -90,14 +90,14 @@ class Admin
     public function register_settings(): void
     {
         // Register settings group
-        register_setting('wp_plugin_settings', 'wp_plugin_options', [$this, 'sanitize_settings']);
+        register_setting('gd_autotag_settings', 'gd_autotag_options', [$this, 'sanitize_settings']);
         
         // General Settings Section
         add_settings_section(
-            'wp_plugin_general_section',
+            'gd_autotag_general_section',
             'General Settings',
             [$this, 'render_general_section'],
-            'wp-plugin-settings'
+            'gd-autotag-settings'
         );
         
         // Example setting: API Key
@@ -105,168 +105,168 @@ class Admin
             'api_key',
             'API Key',
             [$this, 'render_api_key_field'],
-            'wp-plugin-settings',
-            'wp_plugin_general_section'
+            'gd-autotag-settings',
+            'gd_autotag_general_section'
         );
 
         add_settings_field(
             'debug_mode',
             'Debug Mode',
             [$this, 'render_debug_mode_field'],
-            'wp-plugin-settings',
-            'wp_plugin_general_section'
+            'gd-autotag-settings',
+            'gd_autotag_general_section'
         );
         
         // Auto Tag Settings Section
         add_settings_section(
-            'wp_plugin_auto_tagging_section',
+            'gd_autotag_auto_tagging_section',
             'Auto Tag Settings',
             [$this, 'render_auto_tagging_section'],
-            'wp-plugin-auto-tagging'
+            'gd-autotag-auto-tagging'
         );
         
         add_settings_field(
             'auto_tag_enabled',
             'Enable Auto-Tagging',
             [$this, 'render_auto_tag_field'],
-            'wp-plugin-auto-tagging',
-            'wp_plugin_auto_tagging_section'
+            'gd-autotag-auto-tagging',
+            'gd_autotag_auto_tagging_section'
         );
         
         add_settings_field(
             'max_tags_per_post',
             'Maximum Tags Per Post',
             [$this, 'render_max_tags_field'],
-            'wp-plugin-auto-tagging',
-            'wp_plugin_auto_tagging_section'
+            'gd-autotag-auto-tagging',
+            'gd_autotag_auto_tagging_section'
         );
         
         add_settings_field(
             'tag_exclusion_list',
             'Tag Exclusion List',
             [$this, 'render_tag_exclusion_field'],
-            'wp-plugin-auto-tagging',
-            'wp_plugin_auto_tagging_section'
+            'gd-autotag-auto-tagging',
+            'gd_autotag_auto_tagging_section'
         );
 
         // Auto Categories Settings Section
         add_settings_section(
-            'wp_plugin_auto_categories_section',
+            'gd_autotag_auto_categories_section',
             'Auto Category Settings',
             [$this, 'render_auto_categories_section'],
-            'wp-plugin-auto-categories'
+            'gd-autotag-auto-categories'
         );
 
         add_settings_field(
             'auto_category_enabled',
             'Enable Auto-Categorization',
             [$this, 'render_auto_category_field'],
-            'wp-plugin-auto-categories',
-            'wp_plugin_auto_categories_section'
+            'gd-autotag-auto-categories',
+            'gd_autotag_auto_categories_section'
         );
 
         add_settings_field(
             'auto_category_sync_on_save',
             'Sync Categories on Save',
             [$this, 'render_auto_category_sync_field'],
-            'wp-plugin-auto-categories',
-            'wp_plugin_auto_categories_section'
+            'gd-autotag-auto-categories',
+            'gd_autotag_auto_categories_section'
         );
 
         add_settings_field(
             'auto_category_strategy',
             'Categorization Strategy',
             [$this, 'render_auto_category_strategy_field'],
-            'wp-plugin-auto-categories',
-            'wp_plugin_auto_categories_section'
+            'gd-autotag-auto-categories',
+            'gd_autotag_auto_categories_section'
         );
 
         add_settings_field(
             'auto_category_max_categories',
             'Maximum Categories Per Post',
             [$this, 'render_auto_category_limit_field'],
-            'wp-plugin-auto-categories',
-            'wp_plugin_auto_categories_section'
+            'gd-autotag-auto-categories',
+            'gd_autotag_auto_categories_section'
         );
 
         add_settings_field(
             'auto_category_fallback',
             'Fallback Category',
             [$this, 'render_auto_category_fallback_field'],
-            'wp-plugin-auto-categories',
-            'wp_plugin_auto_categories_section'
+            'gd-autotag-auto-categories',
+            'gd_autotag_auto_categories_section'
         );
         
         // Schedule Settings Section (Settings tab)
         add_settings_section(
-            'wp_plugin_schedule_section',
+            'gd_autotag_schedule_section',
             'Schedule',
             [$this, 'render_schedule_section'],
-            'wp-plugin-settings'
+            'gd-autotag-settings'
         );
 
         add_settings_field(
             'schedule_enabled',
             'Enable Schedule',
             [$this, 'render_schedule_toggle_field'],
-            'wp-plugin-settings',
-            'wp_plugin_schedule_section'
+            'gd-autotag-settings',
+            'gd_autotag_schedule_section'
         );
 
         add_settings_field(
             'schedule_frequency',
             'Run Frequency',
             [$this, 'render_schedule_frequency_field'],
-            'wp-plugin-settings',
-            'wp_plugin_schedule_section'
+            'gd-autotag-settings',
+            'gd_autotag_schedule_section'
         );
 
         add_settings_field(
             'schedule_time',
             'Preferred Run Time',
             [$this, 'render_schedule_time_field'],
-            'wp-plugin-settings',
-            'wp_plugin_schedule_section'
+            'gd-autotag-settings',
+            'gd_autotag_schedule_section'
         );
 
         add_settings_field(
             'schedule_batch_size',
             'Posts Per Run',
             [$this, 'render_schedule_batch_size_field'],
-            'wp-plugin-settings',
-            'wp_plugin_schedule_section'
+            'gd-autotag-settings',
+            'gd_autotag_schedule_section'
         );
 
         // Advanced Settings Section
         add_settings_section(
-            'wp_plugin_advanced_section',
+            'gd_autotag_advanced_section',
             'Advanced Settings',
             [$this, 'render_advanced_section'],
-            'wp-plugin-advanced'
+            'gd-autotag-advanced'
         );
         
         add_settings_field(
             'ai_optimization_enabled',
             'AI Tag Optimization',
             [$this, 'render_ai_optimization_field'],
-            'wp-plugin-advanced',
-            'wp_plugin_advanced_section'
+            'gd-autotag-advanced',
+            'gd_autotag_advanced_section'
         );
         
         add_settings_field(
             'ai_provider',
             'AI Provider',
             [$this, 'render_ai_provider_field'],
-            'wp-plugin-advanced',
-            'wp_plugin_advanced_section'
+            'gd-autotag-advanced',
+            'gd_autotag_advanced_section'
         );
         
         add_settings_field(
             'ai_api_key',
             'AI API Key',
             [$this, 'render_ai_api_key_field'],
-            'wp-plugin-advanced',
-            'wp_plugin_advanced_section'
+            'gd-autotag-advanced',
+            'gd_autotag_advanced_section'
         );
     }
 
@@ -282,8 +282,8 @@ class Admin
                 // Check minimum length
                 if (strlen($api_key) < 20) {
                     add_settings_error(
-                        'wp_plugin_messages',
-                        'wp_plugin_api_key_error',
+                        'gd_autotag_messages',
+                        'gd_autotag_api_key_error',
                         'API Key must be at least 20 characters long.',
                         'error'
                     );
@@ -291,8 +291,8 @@ class Admin
                 // Check for valid characters (alphanumeric, dashes, underscores)
                 elseif (!preg_match('/^[a-zA-Z0-9_-]+$/', $api_key)) {
                     add_settings_error(
-                        'wp_plugin_messages',
-                        'wp_plugin_api_key_error',
+                        'gd_autotag_messages',
+                        'gd_autotag_api_key_error',
                         'API Key can only contain letters, numbers, dashes, and underscores.',
                         'error'
                     );
@@ -308,8 +308,8 @@ class Admin
                         $sanitized['api_key_last_checked'] = time();
                         
                         add_settings_error(
-                            'wp_plugin_messages',
-                            'wp_plugin_api_key_success',
+                            'gd_autotag_messages',
+                            'gd_autotag_api_key_success',
                             'API Key validated successfully. License: ' . esc_html($license_check['data']['license_type'] ?? 'Active'),
                             'success'
                         );
@@ -320,8 +320,8 @@ class Admin
                         $sanitized['api_key_last_checked'] = time();
                         
                         add_settings_error(
-                            'wp_plugin_messages',
-                            'wp_plugin_api_key_error',
+                            'gd_autotag_messages',
+                            'gd_autotag_api_key_error',
                             'API Key format is valid, but license verification failed: ' . esc_html($license_check['message']),
                             'error'
                         );
@@ -452,20 +452,20 @@ class Admin
 
     public function render_schedule_section(array $section = []): void
     {
-        $last_run = get_option('wp_plugin_schedule_last_run');
+        $last_run = get_option('gd_autotag_schedule_last_run');
         $last_run_text = $last_run
             ? sprintf('Last run %s ago', human_time_diff($last_run, time()))
             : 'Not run yet';
         echo '<p>Automatically run tagging/categorization tasks on a schedule. ' . esc_html($last_run_text) . '.</p>';
-        $referer_path = esc_url_raw($_SERVER['REQUEST_URI'] ?? 'admin.php?page=wp-plugin&tab=settings');
+        $referer_path = esc_url_raw($_SERVER['REQUEST_URI'] ?? 'admin.php?page=gd-autotag&tab=settings');
         $run_now_url = add_query_arg(
             [
-                'action' => 'wp_plugin_run_schedule_now',
+                'action' => 'gd_autotag_run_schedule_now',
                 '_wp_http_referer' => rawurlencode($referer_path),
             ],
             wp_nonce_url(
                 admin_url('admin-post.php'),
-                'wp_plugin_manual_schedule_run'
+                'gd_autotag_manual_schedule_run'
             )
         );
         ?>
@@ -483,19 +483,19 @@ class Admin
 
     public function render_api_key_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $api_key = isset($options['api_key']) ? $options['api_key'] : '';
         $is_valid = $this->validate_api_key_format($api_key);
-        $status_id = 'wp-plugin-auto-save-api-key';
+        $status_id = 'gd-autotag-auto-save-api-key';
         ?>
         <input type="text" 
-               name="wp_plugin_options[api_key]" 
+               name="gd_autotag_options[api_key]" 
                value="<?php echo esc_attr($api_key); ?>" 
                class="regular-text" 
                placeholder="Enter your API key"
                data-auto-save="1"
                data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <?php if (!empty($api_key)): ?>
             <span style="margin-left: 10px;">
                 <?php if ($is_valid): ?>
@@ -520,44 +520,44 @@ class Admin
 
     public function render_debug_mode_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $debug = isset($options['debug_mode']) ? $options['debug_mode'] : false;
-        $status_id = 'wp-plugin-auto-save-debug-mode';
+        $status_id = 'gd-autotag-auto-save-debug-mode';
         ?>
-        <input type="hidden" name="wp_plugin_options[debug_mode]" value="0" />
-        <label class="wp-plugin-toggle-switch">
+        <input type="hidden" name="gd_autotag_options[debug_mode]" value="0" />
+        <label class="gd-autotag-toggle-switch">
             <input type="checkbox"
-                   name="wp_plugin_options[debug_mode]"
+                   name="gd_autotag_options[debug_mode]"
                    value="1"
                    data-auto-save="1"
                    data-auto-save-target="<?php echo esc_attr($status_id); ?>"
                    <?php checked($debug, true); ?> />
-            <span class="wp-plugin-toggle-slider"></span>
+            <span class="gd-autotag-toggle-slider"></span>
         </label>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
-        <span class="wp-plugin-setting-label">Enable debug mode</span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
+        <span class="gd-autotag-setting-label">Enable debug mode</span>
         <p class="description">Enable debug logging for troubleshooting.</p>
         <?php
     }
 
     public function render_auto_tag_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['auto_tag_enabled']) ? $options['auto_tag_enabled'] : false;
-        $status_id = 'wp-plugin-auto-save-auto-tag';
+        $status_id = 'gd-autotag-auto-save-auto-tag';
         ?>
-        <input type="hidden" name="wp_plugin_options[auto_tag_enabled]" value="0" />
-        <label class="wp-plugin-toggle-switch">
+        <input type="hidden" name="gd_autotag_options[auto_tag_enabled]" value="0" />
+        <label class="gd-autotag-toggle-switch">
             <input type="checkbox"
-                   name="wp_plugin_options[auto_tag_enabled]"
+                   name="gd_autotag_options[auto_tag_enabled]"
                    value="1"
                    data-auto-save="1"
                    data-auto-save-target="<?php echo esc_attr($status_id); ?>"
                    <?php checked($enabled, true); ?> />
-            <span class="wp-plugin-toggle-slider"></span>
+            <span class="gd-autotag-toggle-slider"></span>
         </label>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
-        <span class="wp-plugin-setting-label">Enable automatic tag generation</span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
+        <span class="gd-autotag-setting-label">Enable automatic tag generation</span>
         <p class="description">
             When enabled, adds the following features:<br>
             • <strong>Bulk Action:</strong> "Generate Tags" option in the Posts list for multiple posts<br>
@@ -569,87 +569,87 @@ class Admin
 
     public function render_schedule_toggle_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['schedule_enabled']) ? (bool) $options['schedule_enabled'] : false;
-        $status_id = 'wp-plugin-auto-save-schedule';
+        $status_id = 'gd-autotag-auto-save-schedule';
         ?>
-        <input type="hidden" name="wp_plugin_options[schedule_enabled]" value="0" />
-        <label class="wp-plugin-toggle-switch">
+        <input type="hidden" name="gd_autotag_options[schedule_enabled]" value="0" />
+        <label class="gd-autotag-toggle-switch">
             <input type="checkbox"
-                   name="wp_plugin_options[schedule_enabled]"
+                   name="gd_autotag_options[schedule_enabled]"
                    value="1"
                    data-auto-save="1"
                    data-auto-save-target="<?php echo esc_attr($status_id); ?>"
                    <?php checked($enabled, true); ?> />
-            <span class="wp-plugin-toggle-slider"></span>
+            <span class="gd-autotag-toggle-slider"></span>
         </label>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
-        <span class="wp-plugin-setting-label">Run GD AutoTag automatically</span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
+        <span class="gd-autotag-setting-label">Run GD AutoTag automatically</span>
         <p class="description">When enabled, WordPress cron will execute the tagging/categorization jobs at the frequency you choose.</p>
         <?php
     }
 
     public function render_schedule_frequency_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $frequency = isset($options['schedule_frequency']) ? $options['schedule_frequency'] : 'daily';
-        $status_id = 'wp-plugin-auto-save-schedule-frequency';
+        $status_id = 'gd-autotag-auto-save-schedule-frequency';
         ?>
-        <select name="wp_plugin_options[schedule_frequency]"
+        <select name="gd_autotag_options[schedule_frequency]"
                 data-auto-save="1"
                 data-auto-save-target="<?php echo esc_attr($status_id); ?>">
             <option value="hourly" <?php selected($frequency, 'hourly'); ?>>Hourly</option>
             <option value="twicedaily" <?php selected($frequency, 'twicedaily'); ?>>Twice Daily</option>
             <option value="daily" <?php selected($frequency, 'daily'); ?>>Daily</option>
         </select>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">Choose how often to process posts automatically.</p>
         <?php
     }
 
     public function render_schedule_time_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $time = isset($options['schedule_time']) ? $options['schedule_time'] : '02:00';
-        $status_id = 'wp-plugin-auto-save-schedule-time';
+        $status_id = 'gd-autotag-auto-save-schedule-time';
         ?>
         <input type="time"
-               name="wp_plugin_options[schedule_time]"
+               name="gd_autotag_options[schedule_time]"
                value="<?php echo esc_attr($time); ?>"
                data-auto-save="1"
                data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">Used for daily schedules to specify the preferred start time (site timezone).</p>
         <?php
     }
 
     public function render_schedule_batch_size_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $batch = isset($options['schedule_batch_size']) ? $options['schedule_batch_size'] : 5;
-        $status_id = 'wp-plugin-auto-save-schedule-batch';
+        $status_id = 'gd-autotag-auto-save-schedule-batch';
         ?>
         <input type="number"
-               name="wp_plugin_options[schedule_batch_size]"
+               name="gd_autotag_options[schedule_batch_size]"
                value="<?php echo esc_attr($batch); ?>"
                min="1"
                max="50"
                step="1"
                data-auto-save="1"
                data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">How many posts to attempt per run. Larger batches may impact performance.</p>
         <?php
     }
 
     public function render_max_tags_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $max_tags = isset($options['max_tags_per_post']) ? $options['max_tags_per_post'] : 10;
-        $status_id = 'wp-plugin-auto-save-max-tags';
+        $status_id = 'gd-autotag-auto-save-max-tags';
         ?>
         <input type="number" 
-               name="wp_plugin_options[max_tags_per_post]" 
+               name="gd_autotag_options[max_tags_per_post]" 
                value="<?php echo esc_attr($max_tags); ?>" 
                min="1" 
                max="50" 
@@ -657,7 +657,7 @@ class Admin
                class="small-text"
                data-auto-save="1"
                data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">
             Maximum number of tags to generate per post (1-50). Default is 10.<br>
             The system analyzes post content by word frequency and will generate up to this many tags.
@@ -667,22 +667,22 @@ class Admin
 
     public function render_auto_category_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['auto_category_enabled']) ? $options['auto_category_enabled'] : false;
-        $status_id = 'wp-plugin-auto-save-auto-category';
+        $status_id = 'gd-autotag-auto-save-auto-category';
         ?>
-        <input type="hidden" name="wp_plugin_options[auto_category_enabled]" value="0" />
-        <label class="wp-plugin-toggle-switch">
+        <input type="hidden" name="gd_autotag_options[auto_category_enabled]" value="0" />
+        <label class="gd-autotag-toggle-switch">
             <input type="checkbox"
-                   name="wp_plugin_options[auto_category_enabled]"
+                   name="gd_autotag_options[auto_category_enabled]"
                    value="1"
                    data-auto-save="1"
                    data-auto-save-target="<?php echo esc_attr($status_id); ?>"
                    <?php checked($enabled, true); ?> />
-            <span class="wp-plugin-toggle-slider"></span>
+            <span class="gd-autotag-toggle-slider"></span>
         </label>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
-        <span class="wp-plugin-setting-label">Enable automatic category suggestions</span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
+        <span class="gd-autotag-setting-label">Enable automatic category suggestions</span>
         <p class="description">
             Adds bulk/row actions and editor tools for assigning categories automatically based on your rules.
         </p>
@@ -691,39 +691,39 @@ class Admin
 
     public function render_auto_category_sync_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['auto_category_sync_on_save']) ? $options['auto_category_sync_on_save'] : false;
-        $status_id = 'wp-plugin-auto-save-auto-category-sync';
+        $status_id = 'gd-autotag-auto-save-auto-category-sync';
         ?>
-        <input type="hidden" name="wp_plugin_options[auto_category_sync_on_save]" value="0" />
-        <label class="wp-plugin-toggle-switch">
+        <input type="hidden" name="gd_autotag_options[auto_category_sync_on_save]" value="0" />
+        <label class="gd-autotag-toggle-switch">
             <input type="checkbox"
-                   name="wp_plugin_options[auto_category_sync_on_save]"
+                   name="gd_autotag_options[auto_category_sync_on_save]"
                    value="1"
                    data-auto-save="1"
                    data-auto-save-target="<?php echo esc_attr($status_id); ?>"
                    <?php checked($enabled, true); ?> />
-            <span class="wp-plugin-toggle-slider"></span>
+            <span class="gd-autotag-toggle-slider"></span>
         </label>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
-        <span class="wp-plugin-setting-label">Recalculate categories whenever a post is saved</span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
+        <span class="gd-autotag-setting-label">Recalculate categories whenever a post is saved</span>
         <p class="description">Helpful when editors frequently change titles, tags, or content that affect category selection.</p>
         <?php
     }
 
     public function render_auto_category_strategy_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $strategy = isset($options['auto_category_strategy']) ? $options['auto_category_strategy'] : 'tag-match';
-        $status_id = 'wp-plugin-auto-save-auto-category-strategy';
+        $status_id = 'gd-autotag-auto-save-auto-category-strategy';
         ?>
-        <select name="wp_plugin_options[auto_category_strategy]" class="regular-text"
+        <select name="gd_autotag_options[auto_category_strategy]" class="regular-text"
                 data-auto-save="1"
                 data-auto-save-target="<?php echo esc_attr($status_id); ?>">
             <option value="tag-match" <?php selected($strategy, 'tag-match'); ?>>Match categories to existing tags</option>
             <option value="content-match" <?php selected($strategy, 'content-match'); ?>>Scan content for category keywords</option>
         </select>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">
             <strong>Tag match:</strong> Align categories to tags that share the same name.<br>
             <strong>Content match:</strong> Detect category names and slugs directly inside the post content.
@@ -733,12 +733,12 @@ class Admin
 
     public function render_auto_category_limit_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $limit = isset($options['auto_category_max_categories']) ? $options['auto_category_max_categories'] : 3;
-         $status_id = 'wp-plugin-auto-save-auto-category-limit';
+         $status_id = 'gd-autotag-auto-save-auto-category-limit';
         ?>
         <input type="number"
-               name="wp_plugin_options[auto_category_max_categories]"
+               name="gd_autotag_options[auto_category_max_categories]"
                value="<?php echo esc_attr($limit); ?>"
                min="1"
                max="10"
@@ -746,20 +746,20 @@ class Admin
              class="small-text"
              data-auto-save="1"
              data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
-         <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+         <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">Upper bound on the number of categories added per post (1-10). Default is 3.</p>
         <?php
     }
 
     public function render_auto_category_fallback_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $selected = isset($options['auto_category_fallback']) ? (int) $options['auto_category_fallback'] : 0;
-        $status_id = 'wp-plugin-auto-save-auto-category-fallback';
+        $status_id = 'gd-autotag-auto-save-auto-category-fallback';
         $dropdown = wp_dropdown_categories([
             'taxonomy' => 'category',
             'hide_empty' => false,
-            'name' => 'wp_plugin_options[auto_category_fallback]',
+            'name' => 'gd_autotag_options[auto_category_fallback]',
             'orderby' => 'name',
             'hierarchical' => true,
             'show_option_none' => '— None —',
@@ -772,18 +772,18 @@ class Admin
 
         echo $dropdown;
         ?>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">Used when no categories are detected. Leave as “None” to skip fallback assignment.</p>
         <?php
     }
 
     public function render_tag_exclusion_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $exclusion_list = isset($options['tag_exclusion_list']) ? $options['tag_exclusion_list'] : '';
-        $status_id = 'wp-plugin-auto-save-tag-exclusion';
+        $status_id = 'gd-autotag-auto-save-tag-exclusion';
         ?>
-        <textarea name="wp_plugin_options[tag_exclusion_list]" 
+        <textarea name="gd_autotag_options[tag_exclusion_list]" 
                   rows="8" 
                   cols="50" 
                   class="large-text code"
@@ -791,7 +791,7 @@ class Admin
                   data-auto-save="1"
                   data-auto-save-target="<?php echo esc_attr($status_id); ?>"
         ><?php echo esc_textarea($exclusion_list); ?></textarea>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">
             Enter words that should <strong>never</strong> be used as tags, one per line. These words will be excluded when automatically generating tags.<br>
             <strong>Common words already excluded:</strong> the, and, or, but, in, on, at, to, for, of, with, by, from, as, is, was, are, were, be, been, being, have, has, had, do, does, did, will, would, could, should, may, might, must, can, this, that, these, those, i, you, he, she, it, we, they<br>
@@ -802,22 +802,22 @@ class Admin
 
     public function render_ai_optimization_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $enabled = isset($options['ai_optimization_enabled']) ? $options['ai_optimization_enabled'] : false;
-        $status_id = 'wp-plugin-auto-save-ai-optimization';
+        $status_id = 'gd-autotag-auto-save-ai-optimization';
         ?>
-        <input type="hidden" name="wp_plugin_options[ai_optimization_enabled]" value="0" />
-        <label class="wp-plugin-toggle-switch">
+        <input type="hidden" name="gd_autotag_options[ai_optimization_enabled]" value="0" />
+        <label class="gd-autotag-toggle-switch">
             <input type="checkbox"
-                   name="wp_plugin_options[ai_optimization_enabled]"
+                   name="gd_autotag_options[ai_optimization_enabled]"
                    value="1"
                    data-auto-save="1"
                    data-auto-save-target="<?php echo esc_attr($status_id); ?>"
                    <?php checked($enabled, true); ?> />
-            <span class="wp-plugin-toggle-slider"></span>
+            <span class="gd-autotag-toggle-slider"></span>
         </label>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
-        <span class="wp-plugin-setting-label">Enable AI-powered tag optimization</span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
+        <span class="gd-autotag-setting-label">Enable AI-powered tag optimization</span>
         <p class="description">
             When enabled, uses AI to refine and optimize generated tags for better relevance and SEO.<br>
             <strong>Features:</strong><br>
@@ -832,11 +832,11 @@ class Admin
 
     public function render_ai_provider_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $provider = isset($options['ai_provider']) ? $options['ai_provider'] : 'openai';
-        $status_id = 'wp-plugin-auto-save-ai-provider';
+        $status_id = 'gd-autotag-auto-save-ai-provider';
         ?>
-        <select name="wp_plugin_options[ai_provider]" class="regular-text"
+        <select name="gd_autotag_options[ai_provider]" class="regular-text"
                 data-auto-save="1"
                 data-auto-save-target="<?php echo esc_attr($status_id); ?>">
             <option value="openai" <?php selected($provider, 'openai'); ?>>OpenAI (GPT-3.5/GPT-4)</option>
@@ -844,7 +844,7 @@ class Admin
             <option value="google" <?php selected($provider, 'google'); ?>>Google (Gemini)</option>
             <option value="custom" <?php selected($provider, 'custom'); ?>>Custom API Endpoint</option>
         </select>
-        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+        <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <p class="description">
             Select the AI provider for tag optimization.<br>
             <strong>OpenAI:</strong> Uses GPT models for intelligent tag generation<br>
@@ -857,19 +857,19 @@ class Admin
 
     public function render_ai_api_key_field(): void
     {
-        $options = get_option('wp_plugin_options', []);
+        $options = get_option('gd_autotag_options', []);
         $ai_api_key = isset($options['ai_api_key']) ? $options['ai_api_key'] : '';
         $provider = isset($options['ai_provider']) ? $options['ai_provider'] : 'openai';
-         $status_id = 'wp-plugin-auto-save-ai-api-key';
+         $status_id = 'gd-autotag-auto-save-ai-api-key';
         ?>
         <input type="password" 
-               name="wp_plugin_options[ai_api_key]" 
+               name="gd_autotag_options[ai_api_key]" 
                value="<?php echo esc_attr($ai_api_key); ?>" 
                class="regular-text" 
              placeholder="Enter your AI provider API key"
              data-auto-save="1"
              data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
-         <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
+         <span id="<?php echo esc_attr($status_id); ?>" class="gd-autotag-auto-save-status" aria-live="polite"></span>
         <?php if (!empty($ai_api_key)): ?>
             <span style="margin-left: 10px; color: green;">✓ Key configured</span>
         <?php endif; ?>
@@ -893,12 +893,12 @@ class Admin
 
         // Handle manual update check
         $manualCheckPerformed = false;
-        if (isset($_POST['check_for_updates']) && check_admin_referer('wp_plugin_check_updates')) {
+        if (isset($_POST['check_for_updates']) && check_admin_referer('gd_autotag_check_updates')) {
             $this->force_update_check();
             $manualCheckPerformed = true;
         }
 
-        $scheduleRunStatus = isset($_GET['wp_plugin_schedule_run']) ? sanitize_text_field($_GET['wp_plugin_schedule_run']) : '';
+        $scheduleRunStatus = isset($_GET['gd_autotag_schedule_run']) ? sanitize_text_field($_GET['gd_autotag_schedule_run']) : '';
 
         ?>
         <div class="wrap">
@@ -913,19 +913,19 @@ class Admin
                 </div>
             <?php endif; ?>
             <h2 class="nav-tab-wrapper">
-                <a href="?page=wp-plugin&tab=dashboard" class="nav-tab <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'dashboard') ? 'nav-tab-active' : ''; ?>">Dashboard</a>
-                <a href="?page=wp-plugin&tab=settings" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'settings') ? 'nav-tab-active' : ''; ?>">Settings</a>
-                <a href="?page=wp-plugin&tab=auto-tagging" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-tagging') ? 'nav-tab-active' : ''; ?>">Auto Tag</a>
-                <a href="?page=wp-plugin&tab=auto-categories" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-categories') ? 'nav-tab-active' : ''; ?>">Auto Categories</a>
-                <a href="?page=wp-plugin&tab=advanced" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'advanced') ? 'nav-tab-active' : ''; ?>">Advanced</a>
+                <a href="?page=gd-autotag&tab=dashboard" class="nav-tab <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'dashboard') ? 'nav-tab-active' : ''; ?>">Dashboard</a>
+                <a href="?page=gd-autotag&tab=settings" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'settings') ? 'nav-tab-active' : ''; ?>">Settings</a>
+                <a href="?page=gd-autotag&tab=auto-tagging" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-tagging') ? 'nav-tab-active' : ''; ?>">Auto Tag</a>
+                <a href="?page=gd-autotag&tab=auto-categories" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-categories') ? 'nav-tab-active' : ''; ?>">Auto Categories</a>
+                <a href="?page=gd-autotag&tab=advanced" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'advanced') ? 'nav-tab-active' : ''; ?>">Advanced</a>
             </h2>
 
             <?php
             $tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'dashboard';
             if ($tab === 'dashboard') {
                 ?>
-                <div class="wp-plugin-dashboard-grid">
-                    <div class="wp-plugin-dashboard-column wp-plugin-dashboard-column--main">
+                <div class="gd-autotag-dashboard-grid">
+                    <div class="gd-autotag-dashboard-column gd-autotag-dashboard-column--main">
                         <div class="card">
                             <h2>Posts Summary</h2>
                             <?php
@@ -946,7 +946,7 @@ class Admin
                             $timelineMax = max(1, $timelineMax);
                             $tagStats = $this->get_tag_usage_stats(8);
                             ?>
-                            <div class="wp-plugin-summary-grid">
+                            <div class="gd-autotag-summary-grid">
                                 <div class="summary-item">
                                     <span class="label">Published Posts</span>
                                     <span class="value"><?php echo number_format_i18n($published_posts); ?></span>
@@ -978,7 +978,7 @@ class Admin
                             </div>
 
                             <h3 style="margin-top: 20px;">Post Analytics (Last 12 Months)</h3>
-                            <div id="wp-plugin-post-timeline" class="wp-plugin-line-chart" aria-label="Posts over time">
+                            <div id="gd-autotag-post-timeline" class="gd-autotag-line-chart" aria-label="Posts over time">
                                 <noscript>Enable JavaScript to view the post analytics line chart.</noscript>
                             </div>
                         </div>
@@ -986,7 +986,7 @@ class Admin
                         <div class="card">
                             <h2>Tag Summary</h2>
                             <p style="margin-top: -10px; color: #666;">Review tag coverage and the tags appearing most across your posts.</p>
-                            <div class="wp-plugin-summary-grid">
+                            <div class="gd-autotag-summary-grid">
                                 <div class="summary-item">
                                     <span class="label">Avg Tags / Tagged Post</span>
                                     <span class="value"><?php echo esc_html(number_format_i18n($tagStats['average_tags_per_tagged_post'] ?? 0, 1)); ?></span>
@@ -1002,10 +1002,10 @@ class Admin
                             </div>
 
                             <h3 style="margin-top: 20px;">Top Tags</h3>
-                            <div class="wp-plugin-tag-analytics">
-                                <div class="wp-plugin-tag-analytics__list">
+                            <div class="gd-autotag-tag-analytics">
+                                <div class="gd-autotag-tag-analytics__list">
                             <?php if (!empty($tagStats['top_tags'])): ?>
-                                <ul class="wp-plugin-top-tags-list">
+                                <ul class="gd-autotag-top-tags-list">
                                     <?php foreach ($tagStats['top_tags'] as $tag): ?>
                                         <li>
                                             <span class="tag-name"><?php echo esc_html($tag['name']); ?></span>
@@ -1017,8 +1017,8 @@ class Admin
                                 <p>No tag data available yet.</p>
                             <?php endif; ?>
                                 </div>
-                                <div class="wp-plugin-tag-analytics__chart">
-                                    <div id="wp-plugin-top-tags-chart" class="wp-plugin-bar-chart" aria-label="Top tags bar chart">
+                                <div class="gd-autotag-tag-analytics__chart">
+                                    <div id="gd-autotag-top-tags-chart" class="gd-autotag-bar-chart" aria-label="Top tags bar chart">
                                         <noscript>Enable JavaScript to view the top tags bar chart.</noscript>
                                     </div>
                                 </div>
@@ -1034,7 +1034,7 @@ class Admin
                             <?php endif; ?>
                             <?php $this->display_update_info(); ?>
                             <form method="post" style="margin-top: 20px;">
-                                <?php wp_nonce_field('wp_plugin_check_updates'); ?>
+                                <?php wp_nonce_field('gd_autotag_check_updates'); ?>
                                 <button type="submit" name="check_for_updates" class="button button-primary">
                                     Check for Updates Now
                                 </button>
@@ -1049,7 +1049,7 @@ class Admin
                             <p>This plugin automatically checks for updates from GitHub. When a new release is published, you'll see an update notification in WordPress.</p>
                             <p><strong>How to create a release:</strong></p>
                             <ol>
-                                <li>Update the version number in <code>wp-plugin.php</code></li>
+                                <li>Update the version number in <code>gd-autotag.php</code></li>
                                 <li>Create a new tag: <code>git tag v1.0.1</code></li>
                                 <li>Push the tag: <code>git push origin --tags</code></li>
                                 <li>Create a GitHub Release with a ZIP asset</li>
@@ -1057,11 +1057,11 @@ class Admin
                         </div>
                     </div>
 
-                    <div class="wp-plugin-dashboard-column wp-plugin-dashboard-column--sidebar">
+                    <div class="gd-autotag-dashboard-column gd-autotag-dashboard-column--sidebar">
                         <div class="card">
                             <h2>Current Settings</h2>
                             <?php
-                            $options = get_option('wp_plugin_options', []);
+                            $options = get_option('gd_autotag_options', []);
                             $debug = isset($options['debug_mode']) ? $options['debug_mode'] : false;
                             $has_api_key = !empty($options['api_key']);
                             $api_key_valid = $this->validate_api_key_format($options['api_key'] ?? '');
@@ -1125,9 +1125,9 @@ class Admin
 
                         <div class="card">
                             <h2>Plugin Information</h2>
-                            <p><strong>Version:</strong> <?php echo esc_html(WP_PLUGIN_VERSION); ?></p>
+                            <p><strong>Version:</strong> <?php echo esc_html(GD_AUTOTAG_VERSION); ?></p>
                             <p><strong>Update Source:</strong> GitHub Releases</p>
-                            <p><strong>Repository:</strong> <a href="https://github.com/terence/wp-plugin" target="_blank">terence/wp-plugin</a></p>
+                            <p><strong>Repository:</strong> <a href="https://github.com/terence/gd-autotag" target="_blank">terence/gd-autotag</a></p>
                         </div>
                     </div>
                 </div>
@@ -1136,8 +1136,8 @@ class Admin
                 ?>
                 <form method="post" action="options.php">
                     <?php
-                    settings_fields('wp_plugin_settings');
-                    do_settings_sections('wp-plugin-settings');
+                    settings_fields('gd_autotag_settings');
+                    do_settings_sections('gd-autotag-settings');
                     submit_button('Save Settings');
                     ?>
                 </form>
@@ -1146,8 +1146,8 @@ class Admin
                 ?>
                 <form method="post" action="options.php">
                     <?php
-                    settings_fields('wp_plugin_settings');
-                    do_settings_sections('wp-plugin-auto-tagging');
+                    settings_fields('gd_autotag_settings');
+                    do_settings_sections('gd-autotag-auto-tagging');
                     submit_button('Save Auto Tag Settings');
                     ?>
                 </form>
@@ -1156,8 +1156,8 @@ class Admin
                 ?>
                 <form method="post" action="options.php">
                     <?php
-                    settings_fields('wp_plugin_settings');
-                    do_settings_sections('wp-plugin-auto-categories');
+                    settings_fields('gd_autotag_settings');
+                    do_settings_sections('gd-autotag-auto-categories');
                     submit_button('Save Auto Category Settings');
                     ?>
                 </form>
@@ -1166,8 +1166,8 @@ class Admin
                 ?>
                 <form method="post" action="options.php">
                     <?php
-                    settings_fields('wp_plugin_settings');
-                    do_settings_sections('wp-plugin-advanced');
+                    settings_fields('gd_autotag_settings');
+                    do_settings_sections('gd-autotag-advanced');
                     submit_button('Save Advanced Settings');
                     ?>
                 </form>
@@ -1237,8 +1237,8 @@ class Admin
     private function get_update_checker()
     {
         // Access global update checker instance if stored
-        global $wp_plugin_update_checker;
-        return $wp_plugin_update_checker ?? null;
+        global $gd_autotag_update_checker;
+        return $gd_autotag_update_checker ?? null;
     }
 
     private function get_posts_with_tags_count(): int
@@ -1399,7 +1399,7 @@ class Admin
     private function verify_api_key_license(string $api_key): array
     {
         // Configure your license server endpoint
-        $license_server_url = apply_filters('wp_plugin_license_server_url', 'https://api.example.com/v1/verify-license');
+        $license_server_url = apply_filters('gd_autotag_license_server_url', 'https://api.example.com/v1/verify-license');
         
         // Build the request
         $response = wp_remote_post($license_server_url, [
@@ -1410,7 +1410,7 @@ class Admin
             'body' => json_encode([
                 'api_key' => $api_key,
                 'site_url' => get_site_url(),
-                'plugin_version' => WP_PLUGIN_VERSION,
+                'plugin_version' => GD_AUTOTAG_VERSION,
             ]),
         ]);
         
@@ -1457,7 +1457,7 @@ class Admin
             wp_die('You do not have permission to run this task.');
         }
 
-        check_admin_referer('wp_plugin_manual_schedule_run');
+        check_admin_referer('gd_autotag_manual_schedule_run');
 
         $redirect = wp_get_referer();
         if (empty($redirect) && !empty($_REQUEST['_wp_http_referer'])) {
@@ -1465,17 +1465,17 @@ class Admin
             $redirect = esc_url_raw(rawurldecode($ref));
         }
 
-        if (empty($redirect) || strpos($redirect, 'admin.php?page=wp-plugin') === false) {
-            $redirect = admin_url('admin.php?page=wp-plugin&tab=settings');
+        if (empty($redirect) || strpos($redirect, 'admin.php?page=gd-autotag') === false) {
+            $redirect = admin_url('admin.php?page=gd-autotag&tab=settings');
         }
 
         try {
             $scheduler = new \WpPlugin\Scheduler();
             $scheduler->run_scheduled_tasks();
-            $redirect = add_query_arg('wp_plugin_schedule_run', 'success', $redirect);
+            $redirect = add_query_arg('gd_autotag_schedule_run', 'success', $redirect);
         } catch (\Throwable $e) {
             error_log('GD AutoTag manual schedule run failed: ' . $e->getMessage());
-            $redirect = add_query_arg('wp_plugin_schedule_run', 'error', $redirect);
+            $redirect = add_query_arg('gd_autotag_schedule_run', 'error', $redirect);
         }
 
         wp_safe_redirect($redirect);

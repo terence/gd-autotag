@@ -2,7 +2,7 @@
 /**
  * Fired when the plugin is uninstalled.
  *
- * @package wp_plugin
+ * @package gd_autotag
  */
 
 if (! defined('WP_UNINSTALL_PLUGIN')) {
@@ -10,4 +10,4 @@ if (! defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 // Clean up options, custom tables, etc. Example:
-delete_option('wp_plugin_options');
+delete_option('gd_autotag_options');

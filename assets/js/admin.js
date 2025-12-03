@@ -1,6 +1,6 @@
 (function () {
     function renderLineChart(config) {
-        if (typeof d3 === 'undefined' || typeof wpPluginDashboardData === 'undefined') {
+        if (typeof d3 === 'undefined' || typeof gdAutotagDashboardData === 'undefined') {
             return;
         }
 
@@ -9,7 +9,7 @@
             return;
         }
 
-        var data = wpPluginDashboardData[config.dataKey] || [];
+        var data = gdAutotagDashboardData[config.dataKey] || [];
         if (!data.length) {
             container.innerHTML = '<p style="padding: 12px;">' + (config.emptyMessage || 'No analytics data available.') + '</p>';
             return;
@@ -85,7 +85,7 @@
         });
 
         var tooltip = document.createElement('div');
-        tooltip.className = 'wp-plugin-line-tooltip';
+        tooltip.className = 'gd-autotag-line-tooltip';
         container.appendChild(tooltip);
 
         function showTooltip(event, datum) {
@@ -122,7 +122,7 @@
         });
 
         var legend = document.createElement('div');
-        legend.className = 'wp-plugin-line-legend';
+        legend.className = 'gd-autotag-line-legend';
         legend.innerHTML = config.series.map(function (serie) {
             return '<span><span class="dot" style="background: ' + serie.color + ';"></span>' + serie.label + '</span>';
         }).join('');
@@ -130,16 +130,16 @@
     }
 
     function renderTopTagsBar() {
-        if (typeof d3 === 'undefined' || typeof wpPluginDashboardData === 'undefined') {
+        if (typeof d3 === 'undefined' || typeof gdAutotagDashboardData === 'undefined') {
             return;
         }
 
-        var container = document.getElementById('wp-plugin-top-tags-chart');
+        var container = document.getElementById('gd-autotag-top-tags-chart');
         if (!container) {
             return;
         }
 
-        var data = (wpPluginDashboardData.topTags || []).slice(0, 8);
+        var data = (gdAutotagDashboardData.topTags || []).slice(0, 8);
 
         if (!data.length) {
             container.innerHTML = '<p style="padding: 12px;">No tag data available yet.</p>';
@@ -186,7 +186,7 @@
             .style('font-size', '11px');
 
         var tooltip = document.createElement('div');
-        tooltip.className = 'wp-plugin-line-tooltip';
+        tooltip.className = 'gd-autotag-line-tooltip';
         container.appendChild(tooltip);
 
         function showTooltip(event, datum) {
@@ -362,7 +362,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         renderLineChart({
-            containerId: 'wp-plugin-post-timeline',
+            containerId: 'gd-autotag-post-timeline',
             dataKey: 'postTimeline',
             emptyMessage: 'No post analytics data available.',
             series: [
