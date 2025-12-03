@@ -228,13 +228,13 @@
             .style('fill', '#333');
     }
 
-    function initAutoSaveToggles() {
+    function initAutoSaveFields() {
         if (typeof window.fetch !== 'function' || typeof window.FormData === 'undefined') {
             return;
         }
 
-        var toggles = document.querySelectorAll('input[type="checkbox"][data-auto-save="1"]');
-        if (!toggles.length) {
+        var fields = document.querySelectorAll('[data-auto-save="1"]');
+        if (!fields.length) {
             return;
         }
 
@@ -265,26 +265,42 @@
             }
         }
 
-        toggles.forEach(function (toggle) {
-            toggle.addEventListener('change', function () {
-                var form = toggle.closest('form');
+        var typingTimeouts = new WeakMap();
+
+        function scheduleSubmit(field, delay) {
+            if (typingTimeouts.has(field)) {
+                window.clearTimeout(typingTimeouts.get(field));
+            }
+            var timeoutId = window.setTimeout(function () {
+                typingTimeouts.delete(field);
+                submitField(field);
+            }, delay);
+            typingTimeouts.set(field, timeoutId);
+        }
+
+        function submitField(field) {
+                var form = field.closest('form');
                 if (!form) {
                     return;
                 }
 
                 var action = form.getAttribute('action') || form.action || window.location.href;
-                var statusTarget = toggle.getAttribute('data-auto-save-target');
+                var statusTarget = field.getAttribute('data-auto-save-target');
                 var statusEl = statusTarget ? document.getElementById(statusTarget) : null;
                 var requestId = String(Date.now());
 
                 setStatus(statusEl, 'saving', 'Saving...');
-                toggle.dataset.autoSaveRequest = requestId;
+                field.dataset.autoSaveRequest = requestId;
 
                 var formData = new FormData(form);
-                var fieldName = toggle.getAttribute('name');
+                var fieldName = field.getAttribute('name');
                 if (fieldName) {
                     formData.delete(fieldName);
-                    formData.append(fieldName, toggle.checked ? '1' : '0');
+                    if (field.type === 'checkbox') {
+                        formData.append(fieldName, field.checked ? '1' : '0');
+                    } else {
+                        formData.append(fieldName, field.value);
+                    }
                 }
 
                 fetch(action, {
@@ -302,18 +318,45 @@
                         return response.text();
                     })
                     .then(function () {
-                        if (toggle.dataset.autoSaveRequest !== requestId) {
+                        if (field.dataset.autoSaveRequest !== requestId) {
                             return;
                         }
                         setStatus(statusEl, 'success', 'Saved');
                     })
                     .catch(function () {
-                        if (toggle.dataset.autoSaveRequest !== requestId) {
+                        if (field.dataset.autoSaveRequest !== requestId) {
                             return;
                         }
                         setStatus(statusEl, 'error', 'Save failed');
                     });
-            });
+        }
+
+        fields.forEach(function (field) {
+            if (field.tagName === 'INPUT') {
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    field.addEventListener('change', function () {
+                        submitField(field);
+                    });
+                } else {
+                    field.addEventListener('input', function () {
+                        scheduleSubmit(field, 600);
+                    });
+                    field.addEventListener('blur', function () {
+                        scheduleSubmit(field, 100);
+                    });
+                }
+            } else if (field.tagName === 'SELECT') {
+                field.addEventListener('change', function () {
+                    submitField(field);
+                });
+            } else if (field.tagName === 'TEXTAREA') {
+                field.addEventListener('input', function () {
+                    scheduleSubmit(field, 600);
+                });
+                field.addEventListener('blur', function () {
+                    scheduleSubmit(field, 100);
+                });
+            }
         });
     }
 
@@ -329,6 +372,6 @@
         });
 
         renderTopTagsBar();
-        initAutoSaveToggles();
+        initAutoSaveFields();
     });
 })();

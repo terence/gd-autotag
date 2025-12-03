@@ -486,12 +486,16 @@ class Admin
         $options = get_option('wp_plugin_options', []);
         $api_key = isset($options['api_key']) ? $options['api_key'] : '';
         $is_valid = $this->validate_api_key_format($api_key);
+        $status_id = 'wp-plugin-auto-save-api-key';
         ?>
         <input type="text" 
                name="wp_plugin_options[api_key]" 
                value="<?php echo esc_attr($api_key); ?>" 
                class="regular-text" 
-               placeholder="Enter your API key" />
+               placeholder="Enter your API key"
+               data-auto-save="1"
+               data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <?php if (!empty($api_key)): ?>
             <span style="margin-left: 10px;">
                 <?php if ($is_valid): ?>
@@ -589,12 +593,16 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $frequency = isset($options['schedule_frequency']) ? $options['schedule_frequency'] : 'daily';
+        $status_id = 'wp-plugin-auto-save-schedule-frequency';
         ?>
-        <select name="wp_plugin_options[schedule_frequency]">
+        <select name="wp_plugin_options[schedule_frequency]"
+                data-auto-save="1"
+                data-auto-save-target="<?php echo esc_attr($status_id); ?>">
             <option value="hourly" <?php selected($frequency, 'hourly'); ?>>Hourly</option>
             <option value="twicedaily" <?php selected($frequency, 'twicedaily'); ?>>Twice Daily</option>
             <option value="daily" <?php selected($frequency, 'daily'); ?>>Daily</option>
         </select>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">Choose how often to process posts automatically.</p>
         <?php
     }
@@ -603,8 +611,14 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $time = isset($options['schedule_time']) ? $options['schedule_time'] : '02:00';
+        $status_id = 'wp-plugin-auto-save-schedule-time';
         ?>
-        <input type="time" name="wp_plugin_options[schedule_time]" value="<?php echo esc_attr($time); ?>" />
+        <input type="time"
+               name="wp_plugin_options[schedule_time]"
+               value="<?php echo esc_attr($time); ?>"
+               data-auto-save="1"
+               data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">Used for daily schedules to specify the preferred start time (site timezone).</p>
         <?php
     }
@@ -613,8 +627,17 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $batch = isset($options['schedule_batch_size']) ? $options['schedule_batch_size'] : 5;
+        $status_id = 'wp-plugin-auto-save-schedule-batch';
         ?>
-        <input type="number" name="wp_plugin_options[schedule_batch_size]" value="<?php echo esc_attr($batch); ?>" min="1" max="50" step="1" />
+        <input type="number"
+               name="wp_plugin_options[schedule_batch_size]"
+               value="<?php echo esc_attr($batch); ?>"
+               min="1"
+               max="50"
+               step="1"
+               data-auto-save="1"
+               data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">How many posts to attempt per run. Larger batches may impact performance.</p>
         <?php
     }
@@ -623,6 +646,7 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $max_tags = isset($options['max_tags_per_post']) ? $options['max_tags_per_post'] : 10;
+        $status_id = 'wp-plugin-auto-save-max-tags';
         ?>
         <input type="number" 
                name="wp_plugin_options[max_tags_per_post]" 
@@ -630,7 +654,10 @@ class Admin
                min="1" 
                max="50" 
                step="1"
-               class="small-text" />
+               class="small-text"
+               data-auto-save="1"
+               data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">
             Maximum number of tags to generate per post (1-50). Default is 10.<br>
             The system analyzes post content by word frequency and will generate up to this many tags.
@@ -688,11 +715,15 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $strategy = isset($options['auto_category_strategy']) ? $options['auto_category_strategy'] : 'tag-match';
+        $status_id = 'wp-plugin-auto-save-auto-category-strategy';
         ?>
-        <select name="wp_plugin_options[auto_category_strategy]" class="regular-text">
+        <select name="wp_plugin_options[auto_category_strategy]" class="regular-text"
+                data-auto-save="1"
+                data-auto-save-target="<?php echo esc_attr($status_id); ?>">
             <option value="tag-match" <?php selected($strategy, 'tag-match'); ?>>Match categories to existing tags</option>
             <option value="content-match" <?php selected($strategy, 'content-match'); ?>>Scan content for category keywords</option>
         </select>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">
             <strong>Tag match:</strong> Align categories to tags that share the same name.<br>
             <strong>Content match:</strong> Detect category names and slugs directly inside the post content.
@@ -704,6 +735,7 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $limit = isset($options['auto_category_max_categories']) ? $options['auto_category_max_categories'] : 3;
+         $status_id = 'wp-plugin-auto-save-auto-category-limit';
         ?>
         <input type="number"
                name="wp_plugin_options[auto_category_max_categories]"
@@ -711,7 +743,10 @@ class Admin
                min="1"
                max="10"
                step="1"
-               class="small-text" />
+             class="small-text"
+             data-auto-save="1"
+             data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
+         <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">Upper bound on the number of categories added per post (1-10). Default is 3.</p>
         <?php
     }
@@ -720,6 +755,7 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $selected = isset($options['auto_category_fallback']) ? (int) $options['auto_category_fallback'] : 0;
+        $status_id = 'wp-plugin-auto-save-auto-category-fallback';
         $dropdown = wp_dropdown_categories([
             'taxonomy' => 'category',
             'hide_empty' => false,
@@ -732,8 +768,11 @@ class Admin
             'echo' => false,
         ]);
 
+        $dropdown = str_replace('<select', '<select data-auto-save="1" data-auto-save-target="' . esc_attr($status_id) . '"', $dropdown);
+
         echo $dropdown;
         ?>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">Used when no categories are detected. Leave as “None” to skip fallback assignment.</p>
         <?php
     }
@@ -742,12 +781,17 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $exclusion_list = isset($options['tag_exclusion_list']) ? $options['tag_exclusion_list'] : '';
+        $status_id = 'wp-plugin-auto-save-tag-exclusion';
         ?>
         <textarea name="wp_plugin_options[tag_exclusion_list]" 
                   rows="8" 
                   cols="50" 
                   class="large-text code"
-                  placeholder="Enter words to exclude, one per line"><?php echo esc_textarea($exclusion_list); ?></textarea>
+                  placeholder="Enter words to exclude, one per line"
+                  data-auto-save="1"
+                  data-auto-save-target="<?php echo esc_attr($status_id); ?>"
+        ><?php echo esc_textarea($exclusion_list); ?></textarea>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">
             Enter words that should <strong>never</strong> be used as tags, one per line. These words will be excluded when automatically generating tags.<br>
             <strong>Common words already excluded:</strong> the, and, or, but, in, on, at, to, for, of, with, by, from, as, is, was, are, were, be, been, being, have, has, had, do, does, did, will, would, could, should, may, might, must, can, this, that, these, those, i, you, he, she, it, we, they<br>
@@ -790,13 +834,17 @@ class Admin
     {
         $options = get_option('wp_plugin_options', []);
         $provider = isset($options['ai_provider']) ? $options['ai_provider'] : 'openai';
+        $status_id = 'wp-plugin-auto-save-ai-provider';
         ?>
-        <select name="wp_plugin_options[ai_provider]" class="regular-text">
+        <select name="wp_plugin_options[ai_provider]" class="regular-text"
+                data-auto-save="1"
+                data-auto-save-target="<?php echo esc_attr($status_id); ?>">
             <option value="openai" <?php selected($provider, 'openai'); ?>>OpenAI (GPT-3.5/GPT-4)</option>
             <option value="anthropic" <?php selected($provider, 'anthropic'); ?>>Anthropic (Claude)</option>
             <option value="google" <?php selected($provider, 'google'); ?>>Google (Gemini)</option>
             <option value="custom" <?php selected($provider, 'custom'); ?>>Custom API Endpoint</option>
         </select>
+        <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <p class="description">
             Select the AI provider for tag optimization.<br>
             <strong>OpenAI:</strong> Uses GPT models for intelligent tag generation<br>
@@ -812,12 +860,16 @@ class Admin
         $options = get_option('wp_plugin_options', []);
         $ai_api_key = isset($options['ai_api_key']) ? $options['ai_api_key'] : '';
         $provider = isset($options['ai_provider']) ? $options['ai_provider'] : 'openai';
+         $status_id = 'wp-plugin-auto-save-ai-api-key';
         ?>
         <input type="password" 
                name="wp_plugin_options[ai_api_key]" 
                value="<?php echo esc_attr($ai_api_key); ?>" 
                class="regular-text" 
-               placeholder="Enter your AI provider API key" />
+             placeholder="Enter your AI provider API key"
+             data-auto-save="1"
+             data-auto-save-target="<?php echo esc_attr($status_id); ?>" />
+         <span id="<?php echo esc_attr($status_id); ?>" class="wp-plugin-auto-save-status" aria-live="polite"></span>
         <?php if (!empty($ai_api_key)): ?>
             <span style="margin-left: 10px; color: green;">✓ Key configured</span>
         <?php endif; ?>
