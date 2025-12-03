@@ -133,6 +133,54 @@ class Admin
             'wp-plugin-auto-tagging',
             'wp_plugin_auto_tagging_section'
         );
+
+        // Auto Categories Settings Section
+        add_settings_section(
+            'wp_plugin_auto_categories_section',
+            'Auto Category Settings',
+            [$this, 'render_auto_categories_section'],
+            'wp-plugin-auto-categories'
+        );
+
+        add_settings_field(
+            'auto_category_enabled',
+            'Enable Auto-Categorization',
+            [$this, 'render_auto_category_field'],
+            'wp-plugin-auto-categories',
+            'wp_plugin_auto_categories_section'
+        );
+
+        add_settings_field(
+            'auto_category_sync_on_save',
+            'Sync Categories on Save',
+            [$this, 'render_auto_category_sync_field'],
+            'wp-plugin-auto-categories',
+            'wp_plugin_auto_categories_section'
+        );
+
+        add_settings_field(
+            'auto_category_strategy',
+            'Categorization Strategy',
+            [$this, 'render_auto_category_strategy_field'],
+            'wp-plugin-auto-categories',
+            'wp_plugin_auto_categories_section'
+        );
+
+        add_settings_field(
+            'auto_category_max_categories',
+            'Maximum Categories Per Post',
+            [$this, 'render_auto_category_limit_field'],
+            'wp-plugin-auto-categories',
+            'wp_plugin_auto_categories_section'
+        );
+
+        add_settings_field(
+            'auto_category_fallback',
+            'Fallback Category',
+            [$this, 'render_auto_category_fallback_field'],
+            'wp-plugin-auto-categories',
+            'wp_plugin_auto_categories_section'
+        );
         
         // Advanced Settings Section
         add_settings_section(
@@ -266,6 +314,37 @@ class Admin
         if (isset($input['ai_api_key'])) {
             $sanitized['ai_api_key'] = sanitize_text_field($input['ai_api_key']);
         }
+
+        if (isset($input['auto_category_enabled'])) {
+            $sanitized['auto_category_enabled'] = (bool) $input['auto_category_enabled'];
+        }
+
+        if (isset($input['auto_category_sync_on_save'])) {
+            $sanitized['auto_category_sync_on_save'] = (bool) $input['auto_category_sync_on_save'];
+        }
+
+        if (isset($input['auto_category_strategy'])) {
+            $strategy = sanitize_text_field($input['auto_category_strategy']);
+            $allowed_strategies = ['tag-match', 'content-match'];
+            if (!in_array($strategy, $allowed_strategies, true)) {
+                $strategy = 'tag-match';
+            }
+            $sanitized['auto_category_strategy'] = $strategy;
+        }
+
+        if (isset($input['auto_category_max_categories'])) {
+            $max_categories = absint($input['auto_category_max_categories']);
+            if ($max_categories < 1) {
+                $max_categories = 1;
+            } elseif ($max_categories > 10) {
+                $max_categories = 10;
+            }
+            $sanitized['auto_category_max_categories'] = $max_categories;
+        }
+
+        if (isset($input['auto_category_fallback'])) {
+            $sanitized['auto_category_fallback'] = absint($input['auto_category_fallback']);
+        }
         
         return $sanitized;
     }
@@ -278,6 +357,11 @@ class Admin
     public function render_auto_tagging_section(): void
     {
         echo '<p>Control how automatic tag generation behaves across your posts.</p>';
+    }
+
+    public function render_auto_categories_section(): void
+    {
+        echo '<p>Configure how posts inherit categories automatically based on tags and content.</p>';
     }
 
     public function render_advanced_section(): void
@@ -367,6 +451,90 @@ class Admin
             Maximum number of tags to generate per post (1-50). Default is 10.<br>
             The system analyzes post content by word frequency and will generate up to this many tags.
         </p>
+        <?php
+    }
+
+    public function render_auto_category_field(): void
+    {
+        $options = get_option('wp_plugin_options', []);
+        $enabled = isset($options['auto_category_enabled']) ? $options['auto_category_enabled'] : false;
+        ?>
+        <label class="wp-plugin-toggle-switch">
+            <input type="checkbox" name="wp_plugin_options[auto_category_enabled]" value="1" <?php checked($enabled, true); ?> />
+            <span class="wp-plugin-toggle-slider"></span>
+        </label>
+        <span class="wp-plugin-setting-label">Enable automatic category suggestions</span>
+        <p class="description">
+            Adds bulk/row actions and editor tools for assigning categories automatically based on your rules.
+        </p>
+        <?php
+    }
+
+    public function render_auto_category_sync_field(): void
+    {
+        $options = get_option('wp_plugin_options', []);
+        $enabled = isset($options['auto_category_sync_on_save']) ? $options['auto_category_sync_on_save'] : false;
+        ?>
+        <label class="wp-plugin-toggle-switch">
+            <input type="checkbox" name="wp_plugin_options[auto_category_sync_on_save]" value="1" <?php checked($enabled, true); ?> />
+            <span class="wp-plugin-toggle-slider"></span>
+        </label>
+        <span class="wp-plugin-setting-label">Recalculate categories whenever a post is saved</span>
+        <p class="description">Helpful when editors frequently change titles, tags, or content that affect category selection.</p>
+        <?php
+    }
+
+    public function render_auto_category_strategy_field(): void
+    {
+        $options = get_option('wp_plugin_options', []);
+        $strategy = isset($options['auto_category_strategy']) ? $options['auto_category_strategy'] : 'tag-match';
+        ?>
+        <select name="wp_plugin_options[auto_category_strategy]" class="regular-text">
+            <option value="tag-match" <?php selected($strategy, 'tag-match'); ?>>Match categories to existing tags</option>
+            <option value="content-match" <?php selected($strategy, 'content-match'); ?>>Scan content for category keywords</option>
+        </select>
+        <p class="description">
+            <strong>Tag match:</strong> Align categories to tags that share the same name.<br>
+            <strong>Content match:</strong> Detect category names and slugs directly inside the post content.
+        </p>
+        <?php
+    }
+
+    public function render_auto_category_limit_field(): void
+    {
+        $options = get_option('wp_plugin_options', []);
+        $limit = isset($options['auto_category_max_categories']) ? $options['auto_category_max_categories'] : 3;
+        ?>
+        <input type="number"
+               name="wp_plugin_options[auto_category_max_categories]"
+               value="<?php echo esc_attr($limit); ?>"
+               min="1"
+               max="10"
+               step="1"
+               class="small-text" />
+        <p class="description">Upper bound on the number of categories added per post (1-10). Default is 3.</p>
+        <?php
+    }
+
+    public function render_auto_category_fallback_field(): void
+    {
+        $options = get_option('wp_plugin_options', []);
+        $selected = isset($options['auto_category_fallback']) ? (int) $options['auto_category_fallback'] : 0;
+        $dropdown = wp_dropdown_categories([
+            'taxonomy' => 'category',
+            'hide_empty' => false,
+            'name' => 'wp_plugin_options[auto_category_fallback]',
+            'orderby' => 'name',
+            'hierarchical' => true,
+            'show_option_none' => '— None —',
+            'option_none_value' => '0',
+            'selected' => $selected,
+            'echo' => false,
+        ]);
+
+        echo $dropdown;
+        ?>
+        <p class="description">Used when no categories are detected. Leave as “None” to skip fallback assignment.</p>
         <?php
     }
 
@@ -477,6 +645,7 @@ class Admin
                 <a href="?page=wp-plugin&tab=dashboard" class="nav-tab <?php echo (!isset($_GET['tab']) || $_GET['tab'] === 'dashboard') ? 'nav-tab-active' : ''; ?>">Dashboard</a>
                 <a href="?page=wp-plugin&tab=settings" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'settings') ? 'nav-tab-active' : ''; ?>">Settings</a>
                 <a href="?page=wp-plugin&tab=auto-tagging" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-tagging') ? 'nav-tab-active' : ''; ?>">Auto Tagging</a>
+                <a href="?page=wp-plugin&tab=auto-categories" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'auto-categories') ? 'nav-tab-active' : ''; ?>">Auto Categories</a>
                 <a href="?page=wp-plugin&tab=advanced" class="nav-tab <?php echo (isset($_GET['tab']) && $_GET['tab'] === 'advanced') ? 'nav-tab-active' : ''; ?>">Advanced</a>
             </h2>
 
@@ -666,6 +835,16 @@ class Admin
                     settings_fields('wp_plugin_settings');
                     do_settings_sections('wp-plugin-auto-tagging');
                     submit_button('Save Auto Tagging Settings');
+                    ?>
+                </form>
+                <?php
+            } elseif ($tab === 'auto-categories') {
+                ?>
+                <form method="post" action="options.php">
+                    <?php
+                    settings_fields('wp_plugin_settings');
+                    do_settings_sections('wp-plugin-auto-categories');
+                    submit_button('Save Auto Category Settings');
                     ?>
                 </form>
                 <?php

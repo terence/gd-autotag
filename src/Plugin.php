@@ -46,6 +46,9 @@ class Plugin
         
         $postTagger = new PostTagger();
         $postTagger->register();
+
+        $postCategorizer = new PostCategorizer();
+        $postCategorizer->register();
     }
 
     public function init_public(): void
